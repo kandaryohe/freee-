@@ -1,0 +1,12 @@
+# 環境変数
+.env
+
+# トークン（絶対除外）
+token.json
+
+# Python
+__pycache__/
+*.pyc
+
+# 出力ファイル
+*.xlsx
