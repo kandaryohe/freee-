@@ -1,12 +1,27 @@
-# 環境変数
-.env
+# =============================================
+# Gitで管理しないファイルの設定
+# =============================================
 
-# トークン（絶対除外）
+# --- 機密情報・認証情報（絶対にコミットしないこと） ---
+.env
 token.json
 
-# Python
-__pycache__/
-*.pyc
+# --- アプリが出力するExcelファイル ---
+勤怠_*.xlsx
 
-# 出力ファイル
-*.xlsx
+# --- Python関連 ---
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# --- Claude Code設定 ---
+.claude/settings.local.json
+
+# --- OS・エディタ関連 ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
