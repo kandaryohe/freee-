@@ -34,26 +34,26 @@ html, body, [class*="css"], .stApp {
 }
 
 .block-container {
-    padding-top: 2.5rem;
-    padding-bottom: 3rem;
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
     max-width: 1180px;
     position: relative;
     z-index: 1;
 }
 header[data-testid="stHeader"] { background: transparent; }
 
-/* ---- ヒーロー ---- */
+/* ---- ヒーロー (コンパクト) ---- */
 .hero {
     position: relative;
-    padding: 2.75rem 2.5rem;
-    border-radius: 22px;
+    padding: 0.6rem 1.2rem;
+    border-radius: 16px;
     color: white;
-    margin-bottom: 2.5rem;
+    margin-bottom: 0.5rem;
     overflow: hidden;
     background: linear-gradient(130deg, #0ea5e9, #6366f1, #8b5cf6, #ec4899, #6366f1);
     background-size: 300% 300%;
     animation: gradientShift 18s ease infinite;
-    box-shadow: 0 20px 50px -15px rgba(99,102,241,0.45);
+    box-shadow: 0 14px 36px -15px rgba(99,102,241,0.45);
 }
 @keyframes gradientShift {
     0%,100% { background-position: 0% 50%; }
@@ -65,88 +65,88 @@ header[data-testid="stHeader"] { background: transparent; }
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 2rem;
-    flex-wrap: wrap;
+    gap: 1.5rem;
+    flex-wrap: nowrap;
 }
-.hero-text { flex: 1; min-width: 280px; }
-.hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    background: rgba(255,255,255,0.18);
-    padding: 0.35rem 0.9rem;
-    border-radius: 999px;
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    margin-bottom: 1rem;
-    backdrop-filter: blur(14px);
-    border: 1px solid rgba(255,255,255,0.25);
-}
+.hero-text { flex: 1; min-width: 0; }
 .hero h1 {
     color: white !important;
     margin: 0 !important;
-    font-size: 2.4rem !important;
+    font-size: 1.35rem !important;
     font-weight: 800 !important;
-    letter-spacing: -0.03em !important;
-    line-height: 1.1 !important;
+    letter-spacing: -0.02em !important;
+    line-height: 1.15 !important;
     text-shadow: 0 2px 20px rgba(0,0,0,0.12);
 }
 .hero p {
     color: rgba(255,255,255,0.92);
-    margin: 0.75rem 0 0 0;
-    font-size: 1rem;
-    max-width: 540px;
+    margin: 0.2rem 0 0 0;
+    font-size: 0.78rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-/* ---- アニメーション時計 ---- */
-.clock-scene {
+/* ---- キャラクターシーン ---- */
+.char-scene {
     position: relative;
-    width: 240px;
-    height: 240px;
+    width: 170px;
+    height: 150px;
     flex-shrink: 0;
+    display: block;
 }
-.clock-svg {
+.char-svg {
     width: 100%; height: 100%;
-    filter: drop-shadow(0 10px 30px rgba(0,0,0,0.25));
+    filter: drop-shadow(0 10px 24px rgba(0,0,0,0.25));
+    overflow: visible;
+    display: block;
 }
-.hand-hour, .hand-min, .hand-sec { transform-origin: 100px 100px; }
-.hand-hour { animation: spin 43200s linear infinite; animation-delay: var(--hour-delay, 0s); }
-.hand-min  { animation: spin 3600s linear infinite;  animation-delay: var(--min-delay, 0s); }
-.hand-sec  { animation: spin 60s linear infinite;    animation-delay: var(--sec-delay, 0s); }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ---- 軌道アイコン ---- */
-.orbit {
-    position: absolute;
-    top: 50%; left: 50%;
-    width: 0; height: 0;
+.char-body {
+    transform-origin: 100px 100px;
+    animation: charBob 3s ease-in-out infinite;
 }
-.orbit-1 { animation: orbit 14s linear infinite; }
-.orbit-2 { animation: orbit 18s linear infinite reverse; }
-.orbit-3 { animation: orbit 22s linear infinite; }
-@keyframes orbit { to { transform: rotate(360deg); } }
-.orbit-item {
-    position: absolute;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 42px; height: 42px;
-    border-radius: 12px;
-    background: rgba(255,255,255,0.2);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,0.35);
-    color: white;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    animation: counterSpin 14s linear infinite;
+@keyframes charBob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
 }
-.orbit-2 .orbit-item { animation: counterSpin 18s linear infinite; }
-.orbit-3 .orbit-item { animation: counterSpin 22s linear infinite; }
-@keyframes counterSpin { to { transform: rotate(-360deg); } }
-.orbit-1 .orbit-item { transform: translate(140px, -21px); }
-.orbit-2 .orbit-item { transform: translate(-21px, 140px); }
-.orbit-3 .orbit-item { transform: translate(-140px, -21px); }
+.wave-arm {
+    transform-origin: 129px 78px;
+    animation: wave 1.6s ease-in-out infinite;
+}
+@keyframes wave {
+    0%, 100% { transform: rotate(-18deg); }
+    50% { transform: rotate(22deg); }
+}
+.char-eyes {
+    animation: blink 4.5s ease-in-out infinite;
+    transform-origin: 100px 52px;
+}
+@keyframes blink {
+    0%, 92%, 100% { transform: scaleY(1); }
+    95% { transform: scaleY(0.1); }
+}
+.mini-clock {
+    animation: miniClockFloat 3.5s ease-in-out infinite;
+    transform-origin: 30px 40px;
+}
+@keyframes miniClockFloat {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50% { transform: translateY(-6px) rotate(5deg); }
+}
+.mini-hand-h { animation: miniSpinH 30s linear infinite; transform-origin: center; transform-box: fill-box; }
+.mini-hand-m { animation: miniSpinM 12s linear infinite; transform-origin: center; transform-box: fill-box; }
+@keyframes miniSpinH { to { transform: rotate(360deg); } }
+@keyframes miniSpinM { to { transform: rotate(360deg); } }
+.char-bubble {
+    animation: bubblePop 3.5s ease-in-out infinite;
+    transform-origin: 100px 32px;
+}
+@keyframes bubblePop {
+    0%, 15%, 100% { transform: scale(0); opacity: 0; }
+    25%, 80% { transform: scale(1); opacity: 1; }
+    85% { transform: scale(1.08); opacity: 1; }
+    95% { transform: scale(0); opacity: 0; }
+}
 
 /* ---- パーティクル ---- */
 .particles {
@@ -180,8 +180,8 @@ header[data-testid="stHeader"] { background: transparent; }
 [data-testid="stMetric"] {
     background: rgba(255,255,255,0.7);
     backdrop-filter: blur(20px);
-    padding: 1.4rem 1.6rem;
-    border-radius: 16px;
+    padding: 0.7rem 1rem;
+    border-radius: 14px;
     border: 1px solid rgba(229,231,235,0.8);
     box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 8px 24px -12px rgba(99,102,241,0.12);
     transition: all 0.25s ease;
@@ -199,7 +199,7 @@ header[data-testid="stHeader"] { background: transparent; }
     font-weight: 600 !important;
 }
 [data-testid="stMetricValue"] {
-    font-size: 1.85rem !important;
+    font-size: 1.25rem !important;
     font-weight: 800 !important;
     letter-spacing: -0.02em !important;
     background: linear-gradient(135deg, #0f172a 0%, #475569 100%);
@@ -212,7 +212,7 @@ header[data-testid="stHeader"] { background: transparent; }
 .stButton > button {
     border-radius: 12px !important;
     font-weight: 600 !important;
-    padding: 0.65rem 1.4rem !important;
+    padding: 0.5rem 1.1rem !important;
     transition: all 0.2s ease !important;
     border: 1px solid rgba(0,0,0,0.06) !important;
     font-family: inherit !important;
@@ -236,7 +236,7 @@ header[data-testid="stHeader"] { background: transparent; }
     border: none !important;
     border-radius: 12px !important;
     font-weight: 600 !important;
-    padding: 0.8rem 1.5rem !important;
+    padding: 0.55rem 1.1rem !important;
     box-shadow: 0 4px 20px rgba(16,185,129,0.35) !important;
     animation: subtlePulse 2.5s ease-in-out infinite;
 }
@@ -257,17 +257,17 @@ header[data-testid="stHeader"] { background: transparent; }
 [data-testid="stVerticalBlockBorderWrapper"] {
     background: rgba(255,255,255,0.72) !important;
     backdrop-filter: blur(20px) !important;
-    border-radius: 20px !important;
+    border-radius: 18px !important;
     border: 1px solid rgba(229,231,235,0.8) !important;
     box-shadow: 0 12px 40px -12px rgba(99,102,241,0.15) !important;
-    padding: 1.75rem !important;
+    padding: 1rem 1.3rem !important;
 }
 
 /* ---- 入力 ---- */
 .stTextInput > div > div > input {
     border-radius: 12px !important;
     border: 1.5px solid #e5e7eb !important;
-    padding: 0.6rem 0.9rem !important;
+    padding: 0.45rem 0.8rem !important;
     background: rgba(255,255,255,0.8) !important;
 }
 .stTextInput > div > div > input:focus {
@@ -312,7 +312,7 @@ header[data-testid="stHeader"] { background: transparent; }
 }
 
 /* ---- ステッパー ---- */
-.stepper { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin: 1.25rem 0 1.75rem 0; }
+.stepper { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin: 0.5rem 0 0.85rem 0; }
 .step { display: flex; align-items: center; gap: 0.6rem; }
 .step-num {
     width: 30px; height: 30px; border-radius: 50%;
@@ -328,20 +328,20 @@ header[data-testid="stHeader"] { background: transparent; }
 
 /* ---- アイコン行 ---- */
 .icon-row {
-    display: flex; align-items: center; gap: 0.75rem;
-    padding: 0.75rem 1rem;
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.5rem 0.85rem;
     background: rgba(99,102,241,0.06);
     border-radius: 10px;
     color: #4338ca;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     font-weight: 500;
 }
 .icon-row svg { flex-shrink: 0; }
 
 /* ---- カードタイトル ---- */
-.card-title { display: flex; align-items: center; gap: 0.6rem; font-size: 1.15rem; font-weight: 700; color: #0f172a; margin-bottom: 0.25rem; letter-spacing: -0.01em; }
-.card-title-icon { display: inline-flex; width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg,#6366f1,#8b5cf6); color: white; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(99,102,241,0.3); }
-.card-sub { color: #64748b; font-size: 0.85rem; margin-bottom: 1.25rem; }
+.card-title { display: flex; align-items: center; gap: 0.5rem; font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 0.35rem; letter-spacing: -0.01em; }
+.card-title-icon { display: inline-flex; width: 26px; height: 26px; border-radius: 8px; background: linear-gradient(135deg,#6366f1,#8b5cf6); color: white; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(99,102,241,0.3); }
+.card-sub { color: #64748b; font-size: 0.78rem; margin-bottom: 1.1rem; }
 
 /* ---- アニメーションシールド ---- */
 .shield-scene {
@@ -349,8 +349,8 @@ header[data-testid="stHeader"] { background: transparent; }
     justify-content: center;
     align-items: center;
     position: relative;
-    height: 180px;
-    margin: 1rem 0 1.5rem 0;
+    height: 115px;
+    margin: 0.3rem 0 0.75rem 0;
 }
 .shield-ring {
     position: absolute;
@@ -358,40 +358,40 @@ header[data-testid="stHeader"] { background: transparent; }
     border: 2px solid rgba(99,102,241,0.3);
     animation: ringPulse 2.5s ease-out infinite;
 }
-.shield-ring:nth-child(1) { width: 120px; height: 120px; animation-delay: 0s; }
-.shield-ring:nth-child(2) { width: 120px; height: 120px; animation-delay: 0.8s; }
-.shield-ring:nth-child(3) { width: 120px; height: 120px; animation-delay: 1.6s; }
+.shield-ring:nth-child(1) { width: 110px; height: 110px; animation-delay: 0s; }
+.shield-ring:nth-child(2) { width: 110px; height: 110px; animation-delay: 0.8s; }
+.shield-ring:nth-child(3) { width: 110px; height: 110px; animation-delay: 1.6s; }
 @keyframes ringPulse {
-    0% { width: 80px; height: 80px; opacity: 0.8; border-color: rgba(99,102,241,0.6); }
-    100% { width: 200px; height: 200px; opacity: 0; border-color: rgba(236,72,153,0.2); }
+    0% { width: 75px; height: 75px; opacity: 0.8; border-color: rgba(99,102,241,0.6); }
+    100% { width: 180px; height: 180px; opacity: 0; border-color: rgba(236,72,153,0.2); }
 }
 .shield-core {
     position: relative;
     z-index: 2;
-    width: 88px; height: 88px;
-    border-radius: 22px;
+    width: 80px; height: 80px;
+    border-radius: 20px;
     background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    box-shadow: 0 16px 40px rgba(99,102,241,0.45);
+    box-shadow: 0 14px 34px rgba(99,102,241,0.45);
     animation: bob 4s ease-in-out infinite;
 }
 @keyframes bob {
     0%,100% { transform: translateY(0) rotate(0); }
-    50% { transform: translateY(-8px) rotate(4deg); }
+    50% { transform: translateY(-7px) rotate(4deg); }
 }
-.shield-core svg { width: 42px; height: 42px; }
+.shield-core svg { width: 38px; height: 38px; }
 
 /* ---- 書類イラスト ---- */
 .doc-scene {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 1rem 0;
+    padding: 0.1rem 0;
 }
-.doc-svg { width: 220px; }
+.doc-svg { width: 130px; }
 .doc-line {
     stroke-dasharray: 80;
     stroke-dashoffset: 80;
@@ -418,8 +418,101 @@ header[data-testid="stHeader"] { background: transparent; }
     50% { transform: translateY(-10px); }
 }
 
+/* ---- 踊るマスコット ---- */
+.mascot-scene {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.1rem 0;
+}
+.mascot-svg {
+    width: 160px;
+    filter: drop-shadow(0 10px 22px rgba(99,102,241,0.25));
+    overflow: visible;
+}
+.mascot-body {
+    transform-origin: 110px 160px;
+    animation: mascotJump 1.1s ease-in-out infinite;
+}
+@keyframes mascotJump {
+    0%, 100% { transform: translateY(0) scaleY(1); }
+    40% { transform: translateY(-10px) scaleY(1.03); }
+    60% { transform: translateY(-10px) scaleY(1.03); }
+}
+.arm-dance-l {
+    transform-origin: 74px 80px;
+    animation: armDanceL 1.1s ease-in-out infinite;
+}
+.arm-dance-r {
+    transform-origin: 146px 62px;
+    animation: armDanceR 1.1s ease-in-out infinite;
+}
+@keyframes armDanceL {
+    0%, 100% { transform: rotate(10deg); }
+    50% { transform: rotate(-25deg); }
+}
+@keyframes armDanceR {
+    0%, 100% { transform: rotate(-10deg); }
+    50% { transform: rotate(18deg); }
+}
+.leg-kick-l {
+    transform-origin: 98px 128px;
+    animation: legKickL 1.1s ease-in-out infinite;
+}
+.leg-kick-r {
+    transform-origin: 118px 128px;
+    animation: legKickR 1.1s ease-in-out infinite;
+}
+@keyframes legKickL {
+    0%, 100% { transform: rotate(-8deg); }
+    50% { transform: rotate(12deg); }
+}
+@keyframes legKickR {
+    0%, 100% { transform: rotate(8deg); }
+    50% { transform: rotate(-12deg); }
+}
+.mascot-eyes {
+    animation: mascotBlink 3.6s ease-in-out infinite;
+    transform-origin: 110px 48px;
+}
+@keyframes mascotBlink {
+    0%, 92%, 100% { transform: scaleY(1); }
+    95% { transform: scaleY(0.1); }
+}
+.mascot-note {
+    animation: noteFloat 2.2s ease-in-out infinite;
+    transform-origin: center;
+}
+@keyframes noteFloat {
+    0%, 100% { transform: translate(64px, 58px) rotate(-10deg); opacity: 0.9; }
+    50% { transform: translate(58px, 48px) rotate(8deg); opacity: 1; }
+}
+.spark {
+    animation: sparkPop 2.2s ease-in-out infinite;
+    transform-origin: center;
+    transform-box: fill-box;
+}
+.spark-1 { animation-delay: 0s; }
+.spark-2 { animation-delay: 0.55s; }
+.spark-3 { animation-delay: 1.1s; }
+.spark-4 { animation-delay: 1.65s; }
+@keyframes sparkPop {
+    0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+    40%, 60% { opacity: 1; transform: scale(1) rotate(180deg); }
+}
+
 /* ---- フッター ---- */
-.footer-note { text-align: center; color: #94a3b8; font-size: 0.78rem; margin-top: 3rem; letter-spacing: 0.05em; }
+.footer-note { text-align: center; color: #94a3b8; font-size: 0.72rem; margin-top: 0.35rem; letter-spacing: 0.05em; }
 .footer-note b { color: #475569; }
 
-label { font-weight: 600 !important; color: #334155 !important; font-size: 0.85rem !important; }
+label { font-weight: 600 !important; color: #334155 !important; font-size: 0.8rem !important; }
+
+/* ---- 縦方向の要素間ギャップ圧縮 ---- */
+[data-testid="stVerticalBlock"] { gap: 0.55rem !important; }
+[data-testid="stHorizontalBlock"] { gap: 0.6rem !important; }
+.stMarkdown:empty { display: none; }
+div[data-testid="stMarkdownContainer"] > p { margin-bottom: 0.3rem; }
+
+/* 初回認証・レポートカード内は要素間を広めに */
+[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stVerticalBlock"] { gap: 1.25rem !important; }
+[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stMarkdownContainer"] > p { margin-bottom: 0.5rem; }

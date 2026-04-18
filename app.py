@@ -192,11 +192,11 @@ year = now.year
 month = now.month
 
 # スタイル読込（styles.css + 時計ディレイの CSS 変数）
-st.html(ui.load_styles(now))
+st.markdown(ui.load_styles(now), unsafe_allow_html=True)
 
 # 背景ブロブ + ヒーロー
-st.html(ui.ambient_blobs())
-st.html(ui.hero())
+st.markdown(ui.ambient_blobs(), unsafe_allow_html=True)
+st.markdown(ui.hero(), unsafe_allow_html=True)
 
 # トークン
 access_token = get_valid_token()
@@ -204,14 +204,14 @@ access_token = get_valid_token()
 # サイドバー
 with st.sidebar:
     st.markdown("### Status")
-    st.html(ui.status_pill(access_token is not None))
+    st.markdown(ui.status_pill(access_token is not None), unsafe_allow_html=True)
 
     st.markdown("### Period")
-    st.html(ui.icon_row_period(year, month))
+    st.markdown(ui.icon_row_period(year, month), unsafe_allow_html=True)
     st.caption(f"自動判定: {now.strftime('%Y-%m-%d')}")
 
     st.markdown("### Security")
-    st.html(ui.icon_row_security())
+    st.markdown(ui.icon_row_security(), unsafe_allow_html=True)
 
     st.markdown("---")
 
@@ -220,25 +220,24 @@ with st.sidebar:
             st.session_state.pop("token", None)
             st.rerun()
 
-    st.html(ui.footer_note())
+    st.markdown(ui.footer_note(), unsafe_allow_html=True)
 
 
 # メイン
 if not access_token:
-    st.html(ui.stepper(active_step=1))
+    st.markdown(ui.stepper(active_step=1), unsafe_allow_html=True)
 
     col_l, col_c, col_r = st.columns([1, 2.2, 1])
     with col_c:
         with st.container(border=True):
-            st.html(ui.shield_scene())
-            st.html(ui.auth_card_header())
+            st.markdown(ui.shield_scene(), unsafe_allow_html=True)
+            st.markdown(ui.auth_card_header(), unsafe_allow_html=True)
 
             auth_url = get_auth_url()
 
             st.markdown("**Step 1.** freee認証ページを開いて認可コードを取得")
             st.link_button("freee認証ページを開く", auth_url, use_container_width=True)
 
-            st.markdown("")
             st.markdown("**Step 2.** 表示された認可コードを貼り付け")
             code = st.text_input(
                 "認可コード",
@@ -276,11 +275,9 @@ else:
     m2.metric("対象月", f"{year}年{month:02d}月")
     m3.metric("所属会社", f"{len(companies)} 社")
 
-    st.markdown("")
-
     with st.container(border=True):
-        st.html(ui.report_card_header())
-        st.html(ui.doc_scene())
+        st.markdown(ui.report_card_header(), unsafe_allow_html=True)
+        st.markdown(ui.dancing_mascot(), unsafe_allow_html=True)
 
         label = st.selectbox("対象会社", list(options.keys()))
         selected = options[label]
@@ -290,8 +287,7 @@ else:
         if not employee_id:
             st.error("この会社には従業員IDが紐付いていません")
         else:
-            st.html(ui.info_row_ids(company_id, employee_id))
-            st.markdown("")
+            st.markdown(ui.info_row_ids(company_id, employee_id), unsafe_allow_html=True)
 
             if st.button("データ取得 & Excel作成", type="primary", use_container_width=True):
                 with st.status("レポートを生成しています...", expanded=True) as status:
@@ -320,4 +316,4 @@ else:
                         use_container_width=True,
                     )
 
-st.html(ui.footer_note("© <b>freee Kintai Report</b> · built with Streamlit"))
+st.markdown(ui.footer_note("© <b>freee Kintai Report</b> · Streamlit で構築"), unsafe_allow_html=True)
