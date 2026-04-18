@@ -14,12 +14,24 @@ from openpyxl import load_workbook
 
 import ui
 
-# .env読み込み
+# 設定読込: ローカルは .env、Streamlit Cloud は st.secrets を使用
 load_dotenv()
 
-CLIENT_ID = os.getenv("CLIENT_ID")
-CLIENT_SECRET = os.getenv("CLIENT_SECRET")
-REDIRECT_URI = os.getenv("REDIRECT_URI")
+
+def _cfg(key: str) -> str | None:
+    try:
+        if key in st.secrets:
+            return st.secrets[key]
+    except Exception:
+        pass
+    return os.getenv(key)
+
+
+CLIENT_ID = _cfg("CLIENT_ID")
+CLIENT_SECRET = _cfg("CLIENT_SECRET")
+REDIRECT_URI = _cfg("REDIRECT_URI")
+
+TEMPLATE_FILE = "2026_2月_作業実施報告書_SMHC_神田涼平 .xlsx"
 
 
 # =========================
@@ -97,6 +109,18 @@ def get_user_info(access_token):
     return res.json()
 
 
+def get_employee_name(access_token, company_id, employee_id):
+    """従業員の表示名を取得"""
+    url = f"https://api.freee.co.jp/hr/api/v1/employees/{employee_id}"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    params = {"company_id": company_id}
+    res = requests.get(url, headers=headers, params=params)
+    if res.status_code != 200:
+        return None
+    body = res.json()
+    return body.get("display_name") or body.get("name")
+
+
 # =========================
 # API処理
 # =========================
@@ -131,21 +155,22 @@ def format_work_data(records):
     return data
 
 
-def write_to_excel(year, month, data):
-    template = "作業実施報告書_テンプレート.xlsx"
-    wb = load_workbook(template)
+def write_to_excel(year, month, data, employee_name):
+    wb = load_workbook(TEMPLATE_FILE)
     ws = wb.active
     ws["K8"] = f"{year}/{month:02d}/01"
+
     days = calendar.monthrange(year, month)[1]
     for i in range(days):
         row = 8 + i
         date_str = f"{year}-{month:02d}-{i+1:02d}"
-        record = data.get(date_str)
-        if record:
-            ws[f"M{row}"] = record["clock_in"]
-            ws[f"N{row}"] = record["clock_out"]
-            ws[f"O{row}"] = record["break"]
-    output_file = f"勤怠_{year}_{month:02d}.xlsx"
+        record = data.get(date_str, {})
+        ws[f"M{row}"] = record.get("clock_in")
+        ws[f"N{row}"] = record.get("clock_out")
+        ws[f"O{row}"] = record.get("break")
+
+    safe_name = (employee_name or "未設定").strip()
+    output_file = f"{year}_{month}月_作業実施報告書_SMHC_{safe_name}.xlsx"
     wb.save(output_file)
     return output_file
 
@@ -270,15 +295,19 @@ else:
 
             if st.button("データ取得 & Excel作成", type="primary", use_container_width=True):
                 with st.status("レポートを生成しています...", expanded=True) as status:
-                    st.write("① 勤怠データを取得中...")
+                    st.write("① 従業員情報を取得中...")
+                    employee_name = get_employee_name(access_token, company_id, employee_id)
+                    st.write(f"　→ {employee_name or '(取得失敗)'}")
+
+                    st.write("② 勤怠データを取得中...")
                     records = get_work_records(year, month, access_token, company_id, employee_id)
                     st.write(f"　→ {len(records)} 件のレコードを取得")
 
-                    st.write("② データを整形中...")
+                    st.write("③ データを整形中...")
                     data = format_work_data(records)
 
-                    st.write("③ Excelファイルを生成中...")
-                    file_path = write_to_excel(year, month, data)
+                    st.write("④ Excelファイルを生成中...")
+                    file_path = write_to_excel(year, month, data, employee_name)
                     st.write(f"　→ {file_path}")
 
                     status.update(label="レポート生成完了", state="complete", expanded=False)
