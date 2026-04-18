@@ -1,0 +1,425 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+/* ---- 基本 ---- */
+html, body, [class*="css"], .stApp {
+    font-family: 'Inter', 'Noto Sans JP', -apple-system, sans-serif !important;
+    -webkit-font-smoothing: antialiased;
+}
+.stApp {
+    background:
+        radial-gradient(circle at 15% 10%, rgba(99,102,241,0.10) 0%, transparent 45%),
+        radial-gradient(circle at 85% 20%, rgba(14,165,233,0.10) 0%, transparent 40%),
+        radial-gradient(circle at 50% 90%, rgba(236,72,153,0.08) 0%, transparent 45%),
+        linear-gradient(180deg, #fafbff 0%, #f3f4f9 100%);
+    background-attachment: fixed;
+    overflow-x: hidden;
+}
+
+/* ---- アンビエントブロブ ---- */
+.ambient-blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.55;
+}
+.blob-a { width: 380px; height: 380px; background: #a78bfa; top: -80px; left: -80px; animation: floatBlob 22s ease-in-out infinite; }
+.blob-b { width: 320px; height: 320px; background: #60a5fa; top: 35%; right: -100px; animation: floatBlob 28s ease-in-out infinite reverse; }
+.blob-c { width: 280px; height: 280px; background: #f472b6; bottom: -60px; left: 30%; animation: floatBlob 26s ease-in-out infinite; }
+@keyframes floatBlob {
+    0%, 100% { transform: translate(0,0) scale(1); }
+    33% { transform: translate(40px, -30px) scale(1.1); }
+    66% { transform: translate(-30px, 40px) scale(0.95); }
+}
+
+.block-container {
+    padding-top: 2.5rem;
+    padding-bottom: 3rem;
+    max-width: 1180px;
+    position: relative;
+    z-index: 1;
+}
+header[data-testid="stHeader"] { background: transparent; }
+
+/* ---- ヒーロー ---- */
+.hero {
+    position: relative;
+    padding: 2.75rem 2.5rem;
+    border-radius: 22px;
+    color: white;
+    margin-bottom: 2.5rem;
+    overflow: hidden;
+    background: linear-gradient(130deg, #0ea5e9, #6366f1, #8b5cf6, #ec4899, #6366f1);
+    background-size: 300% 300%;
+    animation: gradientShift 18s ease infinite;
+    box-shadow: 0 20px 50px -15px rgba(99,102,241,0.45);
+}
+@keyframes gradientShift {
+    0%,100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+.hero-inner {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+.hero-text { flex: 1; min-width: 280px; }
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(255,255,255,0.18);
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.25);
+}
+.hero h1 {
+    color: white !important;
+    margin: 0 !important;
+    font-size: 2.4rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.03em !important;
+    line-height: 1.1 !important;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.12);
+}
+.hero p {
+    color: rgba(255,255,255,0.92);
+    margin: 0.75rem 0 0 0;
+    font-size: 1rem;
+    max-width: 540px;
+}
+
+/* ---- アニメーション時計 ---- */
+.clock-scene {
+    position: relative;
+    width: 240px;
+    height: 240px;
+    flex-shrink: 0;
+}
+.clock-svg {
+    width: 100%; height: 100%;
+    filter: drop-shadow(0 10px 30px rgba(0,0,0,0.25));
+}
+.hand-hour, .hand-min, .hand-sec { transform-origin: 100px 100px; }
+.hand-hour { animation: spin 43200s linear infinite; animation-delay: var(--hour-delay, 0s); }
+.hand-min  { animation: spin 3600s linear infinite;  animation-delay: var(--min-delay, 0s); }
+.hand-sec  { animation: spin 60s linear infinite;    animation-delay: var(--sec-delay, 0s); }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---- 軌道アイコン ---- */
+.orbit {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 0; height: 0;
+}
+.orbit-1 { animation: orbit 14s linear infinite; }
+.orbit-2 { animation: orbit 18s linear infinite reverse; }
+.orbit-3 { animation: orbit 22s linear infinite; }
+@keyframes orbit { to { transform: rotate(360deg); } }
+.orbit-item {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.35);
+    color: white;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    animation: counterSpin 14s linear infinite;
+}
+.orbit-2 .orbit-item { animation: counterSpin 18s linear infinite; }
+.orbit-3 .orbit-item { animation: counterSpin 22s linear infinite; }
+@keyframes counterSpin { to { transform: rotate(-360deg); } }
+.orbit-1 .orbit-item { transform: translate(140px, -21px); }
+.orbit-2 .orbit-item { transform: translate(-21px, 140px); }
+.orbit-3 .orbit-item { transform: translate(-140px, -21px); }
+
+/* ---- パーティクル ---- */
+.particles {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+.particle {
+    position: absolute;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.7);
+    box-shadow: 0 0 12px rgba(255,255,255,0.8);
+    animation: driftUp 12s linear infinite;
+}
+.p1 { left: 10%; bottom: -20px; animation-delay: 0s; }
+.p2 { left: 25%; bottom: -20px; animation-delay: 2s; }
+.p3 { left: 40%; bottom: -20px; animation-delay: 5s; width: 4px; height: 4px;}
+.p4 { left: 60%; bottom: -20px; animation-delay: 1s; }
+.p5 { left: 75%; bottom: -20px; animation-delay: 6s; width: 5px; height: 5px;}
+.p6 { left: 90%; bottom: -20px; animation-delay: 3s; }
+@keyframes driftUp {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 0.6; }
+    100% { transform: translateY(-400px) translateX(40px); opacity: 0; }
+}
+
+/* ---- メトリック ---- */
+[data-testid="stMetric"] {
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(20px);
+    padding: 1.4rem 1.6rem;
+    border-radius: 16px;
+    border: 1px solid rgba(229,231,235,0.8);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 8px 24px -12px rgba(99,102,241,0.12);
+    transition: all 0.25s ease;
+}
+[data-testid="stMetric"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 40px -15px rgba(99,102,241,0.25);
+    border-color: rgba(99,102,241,0.3);
+}
+[data-testid="stMetricLabel"] {
+    font-size: 0.72rem !important;
+    color: #64748b !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.1em !important;
+    font-weight: 600 !important;
+}
+[data-testid="stMetricValue"] {
+    font-size: 1.85rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.02em !important;
+    background: linear-gradient(135deg, #0f172a 0%, #475569 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ---- ボタン ---- */
+.stButton > button {
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    padding: 0.65rem 1.4rem !important;
+    transition: all 0.2s ease !important;
+    border: 1px solid rgba(0,0,0,0.06) !important;
+    font-family: inherit !important;
+}
+.stButton > button:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+.stButton > button[kind="primary"] {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%) !important;
+    background-size: 200% 100% !important;
+    border: none !important;
+    color: white !important;
+    box-shadow: 0 4px 20px rgba(99,102,241,0.4) !important;
+    transition: all 0.3s ease !important;
+}
+.stButton > button[kind="primary"]:hover {
+    background-position: 100% 0% !important;
+    box-shadow: 0 8px 28px rgba(139,92,246,0.5) !important;
+}
+.stDownloadButton > button {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    padding: 0.8rem 1.5rem !important;
+    box-shadow: 0 4px 20px rgba(16,185,129,0.35) !important;
+    animation: subtlePulse 2.5s ease-in-out infinite;
+}
+@keyframes subtlePulse {
+    0%,100% { box-shadow: 0 4px 20px rgba(16,185,129,0.35); }
+    50%     { box-shadow: 0 6px 28px rgba(16,185,129,0.55); }
+}
+[data-testid="stLinkButton"] a {
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    background: white !important;
+    border: 1.5px solid #e5e7eb !important;
+    color: #4338ca !important;
+}
+[data-testid="stLinkButton"] a:hover { border-color: #6366f1 !important; background: #eef2ff !important; transform: translateY(-1px); }
+
+/* ---- カード ---- */
+[data-testid="stVerticalBlockBorderWrapper"] {
+    background: rgba(255,255,255,0.72) !important;
+    backdrop-filter: blur(20px) !important;
+    border-radius: 20px !important;
+    border: 1px solid rgba(229,231,235,0.8) !important;
+    box-shadow: 0 12px 40px -12px rgba(99,102,241,0.15) !important;
+    padding: 1.75rem !important;
+}
+
+/* ---- 入力 ---- */
+.stTextInput > div > div > input {
+    border-radius: 12px !important;
+    border: 1.5px solid #e5e7eb !important;
+    padding: 0.6rem 0.9rem !important;
+    background: rgba(255,255,255,0.8) !important;
+}
+.stTextInput > div > div > input:focus {
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 4px rgba(99,102,241,0.12) !important;
+    background: white !important;
+}
+.stSelectbox > div > div { border-radius: 12px !important; background: rgba(255,255,255,0.8) !important; }
+
+/* ---- サイドバー ---- */
+[data-testid="stSidebar"] {
+    background: rgba(255,255,255,0.75) !important;
+    backdrop-filter: blur(20px) !important;
+    border-right: 1px solid rgba(229,231,235,0.8) !important;
+}
+[data-testid="stSidebar"] h3 {
+    font-size: 0.72rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.12em !important;
+    color: #64748b !important;
+    margin: 0.5rem 0 0.5rem 0 !important;
+    font-weight: 700 !important;
+}
+
+/* ---- ステータスピル ---- */
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+.status-pill.ok { background: linear-gradient(135deg,#dcfce7,#bbf7d0); color: #14532d; border: 1px solid rgba(22,163,74,0.2); }
+.status-pill.warn { background: linear-gradient(135deg,#fef3c7,#fde68a); color: #78350f; border: 1px solid rgba(217,119,6,0.25); }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: pulse 2s ease-out infinite; }
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 currentColor; }
+    70% { box-shadow: 0 0 0 8px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* ---- ステッパー ---- */
+.stepper { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin: 1.25rem 0 1.75rem 0; }
+.step { display: flex; align-items: center; gap: 0.6rem; }
+.step-num {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.85rem;
+    box-shadow: 0 4px 12px rgba(99,102,241,0.35);
+}
+.step-num.muted { background: #e5e7eb; color: #94a3b8; box-shadow: none; }
+.step-label { font-size: 0.85rem; font-weight: 600; color: #334155; }
+.step-label.muted { color: #94a3b8; }
+.step-line { width: 40px; height: 2px; background: linear-gradient(90deg, #8b5cf6, #e5e7eb); border-radius: 2px; }
+
+/* ---- アイコン行 ---- */
+.icon-row {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: rgba(99,102,241,0.06);
+    border-radius: 10px;
+    color: #4338ca;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+.icon-row svg { flex-shrink: 0; }
+
+/* ---- カードタイトル ---- */
+.card-title { display: flex; align-items: center; gap: 0.6rem; font-size: 1.15rem; font-weight: 700; color: #0f172a; margin-bottom: 0.25rem; letter-spacing: -0.01em; }
+.card-title-icon { display: inline-flex; width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg,#6366f1,#8b5cf6); color: white; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(99,102,241,0.3); }
+.card-sub { color: #64748b; font-size: 0.85rem; margin-bottom: 1.25rem; }
+
+/* ---- アニメーションシールド ---- */
+.shield-scene {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    height: 180px;
+    margin: 1rem 0 1.5rem 0;
+}
+.shield-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid rgba(99,102,241,0.3);
+    animation: ringPulse 2.5s ease-out infinite;
+}
+.shield-ring:nth-child(1) { width: 120px; height: 120px; animation-delay: 0s; }
+.shield-ring:nth-child(2) { width: 120px; height: 120px; animation-delay: 0.8s; }
+.shield-ring:nth-child(3) { width: 120px; height: 120px; animation-delay: 1.6s; }
+@keyframes ringPulse {
+    0% { width: 80px; height: 80px; opacity: 0.8; border-color: rgba(99,102,241,0.6); }
+    100% { width: 200px; height: 200px; opacity: 0; border-color: rgba(236,72,153,0.2); }
+}
+.shield-core {
+    position: relative;
+    z-index: 2;
+    width: 88px; height: 88px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 16px 40px rgba(99,102,241,0.45);
+    animation: bob 4s ease-in-out infinite;
+}
+@keyframes bob {
+    0%,100% { transform: translateY(0) rotate(0); }
+    50% { transform: translateY(-8px) rotate(4deg); }
+}
+.shield-core svg { width: 42px; height: 42px; }
+
+/* ---- 書類イラスト ---- */
+.doc-scene {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem 0;
+}
+.doc-svg { width: 220px; }
+.doc-line {
+    stroke-dasharray: 80;
+    stroke-dashoffset: 80;
+    animation: drawLine 3s ease-in-out infinite;
+}
+.doc-line.l2 { animation-delay: 0.3s; }
+.doc-line.l3 { animation-delay: 0.6s; }
+.doc-line.l4 { animation-delay: 0.9s; }
+.doc-line.l5 { animation-delay: 1.2s; }
+@keyframes drawLine {
+    0% { stroke-dashoffset: 80; }
+    50% { stroke-dashoffset: 0; }
+    100% { stroke-dashoffset: -80; }
+}
+.doc-check { animation: checkPop 3s ease-in-out infinite; transform-origin: center; }
+@keyframes checkPop {
+    0%, 40% { transform: scale(0); opacity: 0; }
+    50%, 90% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0); opacity: 0; }
+}
+.doc-float { animation: docFloat 4s ease-in-out infinite; }
+@keyframes docFloat {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* ---- フッター ---- */
+.footer-note { text-align: center; color: #94a3b8; font-size: 0.78rem; margin-top: 3rem; letter-spacing: 0.05em; }
+.footer-note b { color: #475569; }
+
+label { font-weight: 600 !important; color: #334155 !important; font-size: 0.85rem !important; }
