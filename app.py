@@ -113,30 +113,9 @@ def get_user_info(access_token):
     return res.json()
 
 
-def get_employee_profile(access_token, company_id, employee_id):
-    """従業員情報を取得し {display_name, last_name, first_name} を返す"""
-    url = f"https://api.freee.co.jp/hr/api/v1/employees/{employee_id}"
-    headers = {"Authorization": f"Bearer {access_token}"}
-    params = {"company_id": company_id}
-    res = requests.get(url, headers=headers, params=params)
-    if res.status_code != 200:
-        st.warning(f"従業員名API失敗 (status={res.status_code}): {res.text[:300]}")
-        return {}
-    body = res.json()
-    # freee HR APIは {"employee": {...}} でラップされることがある
-    emp = body.get("employee", body)
-    last = (emp.get("last_name") or "").strip()
-    first = (emp.get("first_name") or "").strip()
-    full = f"{last} {first}".strip() if (last or first) else ""
-    return {
-        "display_name": emp.get("display_name") or emp.get("name") or full or None,
-        "last_name": last or None,
-        "first_name": first or None,
-    }
-
-
 def split_display_name(display_name):
-    """display_name を空白で苗字・名前に分割 (フォールバック用)"""
+    """display_name を空白区切りで苗字・名前に分割。
+    空白がなければ全体を苗字として返す。"""
     if not display_name:
         return None, None
     parts = display_name.strip().split(None, 1)
@@ -394,17 +373,9 @@ else:
             if st.button("データ取得 & Excel作成", type="primary", use_container_width=True):
                 with st.status("レポートを生成しています...", expanded=True) as status:
                     st.write("① 従業員情報を取得中...")
-                    # /employees/{id} から last_name / first_name を取得
-                    profile = get_employee_profile(access_token, company_id, employee_id)
-                    last_name = profile.get("last_name")
-                    first_name = profile.get("first_name")
-                    employee_name = (
-                        profile.get("display_name")
-                        or selected.get("display_name")
-                    )
-                    # API失敗時のフォールバック: display_name を空白で分割
-                    if not last_name and not first_name:
-                        last_name, first_name = split_display_name(employee_name)
+                    # /users/me の companies[].display_name から氏名を取得し分割
+                    employee_name = selected.get("display_name")
+                    last_name, first_name = split_display_name(employee_name)
                     st.write(f"　→ {employee_name or '(取得失敗)'} (苗字: {last_name or '-'} / 名前: {first_name or '-'})")
 
                     st.write("② 勤怠データを取得中...")
