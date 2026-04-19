@@ -135,16 +135,32 @@ def get_employee_name(access_token, company_id, employee_id):
 # API処理
 # =========================
 
+_HHMM_RE = __import__("re").compile(r"(\d{1,2}):(\d{2})")
+
+
 def _parse_hhmm(s):
-    """freeeの '2026-04-01 09:00:00' や '09:00:00' から time オブジェクトを返す"""
+    """freeeの様々な時刻表現から time オブジェクトを返す
+    対応例:
+      '2026-04-01T09:00:00.000+09:00' (ISO8601 / T区切り / タイムゾーン付)
+      '2026-04-01 09:00:00'           (空白区切り)
+      '09:00:00'                      (時刻のみ)
+    """
     if not s:
         return None
     s = str(s).strip()
-    time_part = s.split(" ", 1)[-1] if " " in s else s
+    # 日付と時刻を分離 (T または 空白)
+    if "T" in s:
+        time_part = s.split("T", 1)[1]
+    elif " " in s:
+        time_part = s.split(" ", 1)[1]
+    else:
+        time_part = s
+    m = _HHMM_RE.match(time_part)
+    if not m:
+        return None
     try:
-        parts = time_part.split(":")
-        return time(int(parts[0]), int(parts[1]))
-    except (ValueError, IndexError):
+        return time(int(m.group(1)), int(m.group(2)))
+    except ValueError:
         return None
 
 
