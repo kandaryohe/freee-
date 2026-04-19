@@ -175,7 +175,6 @@ def write_to_excel(year, month, data, employee_name):
         row = 8 + i
         date_str = f"{year}-{month:02d}-{i+1:02d}"
         record = data.get(date_str, {})
-        ws[f"L{row}"] = None  # テンプレートのミラー式(=Kn)を無効化
         ws[f"M{row}"] = record.get("clock_in")
         ws[f"N{row}"] = record.get("clock_out")
         ws[f"O{row}"] = record.get("break")
@@ -278,8 +277,11 @@ else:
         st.error("所属会社が見つかりません")
         st.stop()
 
+    # freee HR API の仕様:
+    #   companies[].name         = 会社名
+    #   companies[].display_name = ユーザー本人の従業員表示名（氏名）
     options = {
-        (c.get("display_name") or c.get("name") or f"会社ID:{c['id']}"): c
+        (c.get("name") or f"会社ID:{c['id']}"): c
         for c in companies
     }
 
@@ -306,7 +308,11 @@ else:
             if st.button("データ取得 & Excel作成", type="primary", use_container_width=True):
                 with st.status("レポートを生成しています...", expanded=True) as status:
                     st.write("① 従業員情報を取得中...")
-                    employee_name = get_employee_name(access_token, company_id, employee_id)
+                    # /users/me の companies[].display_name に氏名が入っているため優先
+                    employee_name = (
+                        selected.get("display_name")
+                        or get_employee_name(access_token, company_id, employee_id)
+                    )
                     st.write(f"　→ {employee_name or '(取得失敗)'}")
 
                     st.write("② 勤怠データを取得中...")
