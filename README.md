@@ -44,10 +44,13 @@ pip install -r requirements.txt
 ```env
 CLIENT_ID=<freeeアプリのClient ID>
 CLIENT_SECRET=<freeeアプリのClient Secret>
-REDIRECT_URI=http://localhost:8501
+REDIRECT_URI=<freeeアプリ管理画面に登録した「コールバックURL」と同一の値>
 ```
 
-> 各値は freee アプリ管理画面（開発者向け）で取得できます。
+> - `CLIENT_ID` / `CLIENT_SECRET` は freee アプリ管理画面（開発者向け）で取得できます
+> - `REDIRECT_URI` は freee 側で設定した「コールバックURL」と**完全に一字一句一致**させる必要があります
+>   - 例1: ローカルで受け取る場合 → `http://localhost:8501`
+>   - 例2: freee の developers ページで認可コードを表示させる場合 → `https://app.secure.freee.co.jp/developers/start_guides/applications/<app_id>/token?company_id=<company_id>`
 
 ### 4. 起動
 
@@ -80,8 +83,10 @@ streamlit run app.py
 ## 使い方
 
 1. 起動後の画面で **「freee認証ページを開く」** をクリック
-2. freee で認可 → 画面に表示される認可コードをコピー
-3. アプリの「認可コード」欄に貼り付け **「認証する」** をクリック
+2. freee で認可 → `REDIRECT_URI` のページに遷移し、**認可コード**が表示される
+   - freee developers ページを使っている場合: ページ内に `code=xxxx` が表示される
+   - localhost の場合: ブラウザの URL バーに `?code=xxxx` が付く
+3. 認可コード（`xxxx` の部分）をコピーし、アプリの「認可コード」欄に貼り付け **「認証する」** をクリック
 4. 対象会社を選択し、**「データ取得 & Excel作成」** をクリック
 5. 生成された Excel を **「Excelをダウンロード」** で取得
 
