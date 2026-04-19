@@ -120,9 +120,15 @@ def get_employee_name(access_token, company_id, employee_id):
     params = {"company_id": company_id}
     res = requests.get(url, headers=headers, params=params)
     if res.status_code != 200:
+        st.warning(f"従業員名API失敗 (status={res.status_code}): {res.text[:300]}")
         return None
     body = res.json()
-    return body.get("display_name") or body.get("name")
+    # freee HR APIは {"employee": {...}} でラップされることがある
+    emp = body.get("employee", body)
+    last = (emp.get("last_name") or "").strip()
+    first = (emp.get("first_name") or "").strip()
+    full = f"{last}{first}".strip()
+    return emp.get("display_name") or emp.get("name") or (full or None)
 
 
 # =========================
@@ -169,6 +175,7 @@ def write_to_excel(year, month, data, employee_name):
         row = 8 + i
         date_str = f"{year}-{month:02d}-{i+1:02d}"
         record = data.get(date_str, {})
+        ws[f"L{row}"] = None  # テンプレートのミラー式(=Kn)を無効化
         ws[f"M{row}"] = record.get("clock_in")
         ws[f"N{row}"] = record.get("clock_out")
         ws[f"O{row}"] = record.get("break")
