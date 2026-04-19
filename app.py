@@ -235,11 +235,19 @@ def write_to_excel(year, month, data, employee_name):
     days = calendar.monthrange(year, month)[1]
     for i in range(days):
         row = 8 + i
-        date_str = f"{year}-{month:02d}-{i+1:02d}"
+        d = date(year, month, i + 1)
+        date_str = d.strftime("%Y-%m-%d")
         record = data.get(date_str, {})
-        ws[f"M{row}"] = record.get("clock_in")
-        ws[f"N{row}"] = record.get("clock_out")
-        ws[f"O{row}"] = record.get("break")
+        clock_in = record.get("clock_in")
+        clock_out = record.get("clock_out")
+        ws[f"M{row}"] = clock_in
+        ws[f"N{row}"] = clock_out
+        # 土日かつ未出勤は休憩時間欄を空欄にする (0.0 を表示しない)
+        is_weekend = d.weekday() >= 5  # 5=土, 6=日
+        if is_weekend and not clock_in and not clock_out:
+            ws[f"O{row}"] = None
+        else:
+            ws[f"O{row}"] = record.get("break")
 
     safe_name = (employee_name or "未設定").strip()
     file_name = f"{year}_{month}月_作業実施報告書_SMHC_{safe_name}.xlsx"
