@@ -8,7 +8,7 @@ import os
 import requests
 import calendar
 from io import BytesIO
-from datetime import datetime, timedelta
+from datetime import datetime, date, time, timedelta
 from urllib.parse import urlencode
 from dotenv import load_dotenv
 import streamlit as st
@@ -135,32 +135,57 @@ def get_employee_name(access_token, company_id, employee_id):
 # API処理
 # =========================
 
+def _parse_hhmm(s):
+    """freeeの '2026-04-01 09:00:00' や '09:00:00' から time オブジェクトを返す"""
+    if not s:
+        return None
+    s = str(s).strip()
+    time_part = s.split(" ", 1)[-1] if " " in s else s
+    try:
+        parts = time_part.split(":")
+        return time(int(parts[0]), int(parts[1]))
+    except (ValueError, IndexError):
+        return None
+
+
+def _break_total_hours(break_records):
+    """break_records 配列から合計休憩時間(時間, 小数)を計算"""
+    total_minutes = 0
+    for b in break_records or []:
+        t1 = _parse_hhmm(b.get("clock_in_at"))
+        t2 = _parse_hhmm(b.get("clock_out_at"))
+        if t1 and t2:
+            total_minutes += max(0, (t2.hour * 60 + t2.minute) - (t1.hour * 60 + t1.minute))
+    return round(total_minutes / 60, 2) if total_minutes else 0
+
+
 def get_work_records(year, month, access_token, company_id, employee_id):
-    url = "https://api.freee.co.jp/hr/api/v1/work_records"
-    start_date = f"{year}-{month:02d}-01"
-    end_date = f"{year}-{month:02d}-{calendar.monthrange(year, month)[1]}"
+    """月次の勤怠サマリを取得 (work_record_summaries エンドポイント)"""
+    url = (
+        "https://api.freee.co.jp/hr/api/v1"
+        f"/employees/{employee_id}/work_record_summaries/{year}/{month}"
+    )
     headers = {"Authorization": f"Bearer {access_token}"}
-    params = {
-        "company_id": company_id,
-        "employee_id": employee_id,
-        "start_date": start_date,
-        "end_date": end_date
-    }
+    params = {"company_id": company_id}
     res = requests.get(url, headers=headers, params=params)
     if res.status_code != 200:
-        st.error(f"APIエラー: {res.text}")
+        st.error(f"勤怠APIエラー (status={res.status_code}): {res.text[:400]}")
         return []
-    return res.json().get("work_records", [])
+    body = res.json()
+    summary = body.get("work_record_summary", body)
+    return summary.get("work_records", [])
 
 
 def format_work_data(records):
     data = {}
     for r in records:
-        date = r.get("date")
-        data[date] = {
-            "clock_in": r.get("clock_in_at"),
-            "clock_out": r.get("clock_out_at"),
-            "break": r.get("break_minutes", 0)
+        d = r.get("date")
+        if not d:
+            continue
+        data[d] = {
+            "clock_in": _parse_hhmm(r.get("clock_in_at")),
+            "clock_out": _parse_hhmm(r.get("clock_out_at")),
+            "break": _break_total_hours(r.get("break_records")),
         }
     return data
 
@@ -168,7 +193,7 @@ def format_work_data(records):
 def write_to_excel(year, month, data, employee_name):
     wb = load_workbook(TEMPLATE_FILE)
     ws = wb.active
-    ws["K8"] = f"{year}/{month:02d}/01"
+    ws["K8"] = date(year, month, 1)  # date型で書き込み → L列の weekday書式(ddd)が機能する
 
     days = calendar.monthrange(year, month)[1]
     for i in range(days):
