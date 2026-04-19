@@ -10,34 +10,7 @@ freee人事労務APIと連携し、**当月の勤怠データを自動取得し�
 - 所属会社を選択すると、当月分の勤怠データ（出勤・退勤・休憩）を自動取得
 - 所定のテンプレート（作業実施報告書）に転記し、氏名入りの Excel ファイルとしてダウンロード
 
-60名規模のチームでの同時利用を想定した設計（セッションごとに独立したトークン管理・メモリ上でのファイル生成）になっています。
-
----
-
-## 主な機能
-
-| 機能 | 説明 |
-| --- | --- |
-| OAuth 2.0 認証 | freee の公式認証フローを使用（Client Secret はサーバーのみに保管） |
-| 自動勤怠取得 | `/hr/api/v1/work_records` を月単位で取得 |
-| 会社切替 | ユーザーが複数事業所に所属していても選択可能 |
-| Excel 自動生成 | `openpyxl` でテンプレートに転記、メモリ上で生成してそのままダウンロード |
-| UIアニメーション | Streamlit + カスタム CSS / SVG によるリッチな画面 |
-
----
-
-## ファイル構成
-
-```
-freee!/
-├── app.py                       … Streamlit アプリ本体（OAuth・API・Excel 生成）
-├── ui.py                        … UI コンポーネント（SVG / HTML テンプレート）
-├── styles.css                   … アプリのスタイル定義
-├── requirements.txt             … 依存ライブラリ
-├── .env.sample                  … 環境変数テンプレート（これをコピーして .env を作成）
-├── .gitignore                   … .env / *.xlsx / __pycache__ を除外
-└── 2026_2月_作業実施報告書_...xlsx … 転記先の Excel テンプレート
-```
+60名規模のチームでの同時利用を想定した設計です（セッションごとに独立したトークン管理・メモリ上でのファイル生成）。
 
 ---
 
@@ -65,13 +38,8 @@ pip install -r requirements.txt
 
 ### 3. 環境変数を設定
 
-`.env.sample` をコピーして `.env` を作成し、freee アプリ管理画面で取得した値を貼り付けます。
-
-```bash
-cp .env.sample .env
-```
-
-`.env` の中身：
+プロジェクト直下に **`.env.sample`** ファイルを作成し、以下の値を設定します。
+（`.env.sample` は `.gitignore` 対象のため Git にはコミットされません）
 
 ```env
 CLIENT_ID=<freeeアプリのClient ID>
@@ -79,13 +47,15 @@ CLIENT_SECRET=<freeeアプリのClient Secret>
 REDIRECT_URI=http://localhost:8501
 ```
 
+> 各値は freee アプリ管理画面（開発者向け）で取得できます。
+
 ### 4. 起動
 
 ```bash
 streamlit run app.py
 ```
 
-ブラウザが自動で `http://localhost:8501` を開きます。
+ブラウザで `http://localhost:8501` が開きます。
 
 ---
 
@@ -100,8 +70,10 @@ streamlit run app.py
    REDIRECT_URI = "https://<your-app>.streamlit.app"
    ```
 
-3. **freee アプリ管理画面** で、コールバックURL に上記の本番URLを追加
+3. **freee アプリ管理画面** で、コールバックURL（リダイレクトURI）に本番のURLを追加
 4. デプロイ開始
+
+> 本番運用時は `.env.sample` は使わず、上記の Streamlit Secrets が利用されます。
 
 ---
 
@@ -122,7 +94,7 @@ streamlit run app.py
 ### ✅ 事前準備
 
 - [ ] freee 人事労務で自分のアカウントに当月の勤怠データがあることを確認
-- [ ] `.env`（またはStreamlit Cloud の Secrets）の `CLIENT_ID` / `CLIENT_SECRET` / `REDIRECT_URI` が正しく設定されているか
+- [ ] `.env.sample`（またはStreamlit Cloud の Secrets）の `CLIENT_ID` / `CLIENT_SECRET` / `REDIRECT_URI` が正しく設定されているか
 - [ ] freee アプリ管理画面のコールバックURLが `REDIRECT_URI` と完全一致しているか
 
 ### ✅ T1. 起動確認
@@ -130,7 +102,6 @@ streamlit run app.py
 1. `streamlit run app.py` を実行
 2. ブラウザでトップ画面が表示される
 3. サイドバー Status が **「Unauthenticated」** になっている
-4. ヒーロー画像・時計アニメが正常に動く
 
 **合格条件**: エラー表示なく画面が表示される
 
@@ -203,6 +174,6 @@ streamlit run app.py
 
 ## セキュリティ上の注意
 
-- `.env` は `.gitignore` で除外済み。絶対にコミットしないこと
+- `.env` / `.env.sample` はどちらも `.gitignore` で除外済。**絶対にコミットしないこと**
 - `CLIENT_SECRET` が漏洩した場合は freee アプリ管理画面で即時再発行
 - アクセストークンは `st.session_state`（ブラウザセッションごと）に保管。ファイルには保存しません

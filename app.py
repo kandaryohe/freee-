@@ -15,8 +15,9 @@ from openpyxl import load_workbook
 
 import ui
 
-# 設定読込: ローカルは .env、Streamlit Cloud は st.secrets を使用
+# 設定読込: ローカルは .env / .env.sample、Streamlit Cloud は st.secrets を使用
 load_dotenv()
+load_dotenv(".env.sample", override=True)
 
 
 def _cfg(key: str) -> str | None:

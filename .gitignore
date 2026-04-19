@@ -1,5 +1,7 @@
-# 環境変数
+# 環境変数（実値を含むファイルはすべて除外）
 .env
+.env.sample
+.env.local
 
 # トークン（絶対除外）
 token.json
