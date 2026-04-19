@@ -7,6 +7,7 @@ freee人事労務API × Streamlit
 import os
 import requests
 import calendar
+from io import BytesIO
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import streamlit as st
@@ -170,9 +171,12 @@ def write_to_excel(year, month, data, employee_name):
         ws[f"O{row}"] = record.get("break")
 
     safe_name = (employee_name or "未設定").strip()
-    output_file = f"{year}_{month}月_作業実施報告書_SMHC_{safe_name}.xlsx"
-    wb.save(output_file)
-    return output_file
+    file_name = f"{year}_{month}月_作業実施報告書_SMHC_{safe_name}.xlsx"
+
+    buffer = BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+    return file_name, buffer
 
 
 # =========================
@@ -303,17 +307,17 @@ else:
                     data = format_work_data(records)
 
                     st.write("④ Excelファイルを生成中...")
-                    file_path = write_to_excel(year, month, data, employee_name)
-                    st.write(f"　→ {file_path}")
+                    file_name, file_buffer = write_to_excel(year, month, data, employee_name)
+                    st.write(f"　→ {file_name}")
 
                     status.update(label="レポート生成完了", state="complete", expanded=False)
 
-                with open(file_path, "rb") as f:
-                    st.download_button(
-                        label="Excelをダウンロード",
-                        data=f,
-                        file_name=file_path,
-                        use_container_width=True,
-                    )
+                st.download_button(
+                    label="Excelをダウンロード",
+                    data=file_buffer,
+                    file_name=file_name,
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True,
+                )
 
 st.markdown(ui.footer_note("© <b>freee Kintai Report</b> · Streamlit で構築"), unsafe_allow_html=True)

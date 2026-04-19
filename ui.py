@@ -270,41 +270,6 @@ def report_card_header() -> str:
 """)
 
 
-def doc_scene() -> str:
-    """動く書類イラスト（浮遊＋線描画＋チェックポップイン）"""
-    return _flat("""
-<div class="doc-scene">
-  <svg class="doc-svg doc-float" viewBox="0 0 220 170">
-    <defs>
-      <linearGradient id="paperGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#ffffff"/>
-        <stop offset="100%" stop-color="#f1f5f9"/>
-      </linearGradient>
-      <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="#6366f1"/>
-        <stop offset="100%" stop-color="#ec4899"/>
-      </linearGradient>
-    </defs>
-    <rect x="50" y="20" width="130" height="140" rx="10" fill="#e0e7ff" opacity="0.6" transform="rotate(-5 115 90)"/>
-    <rect x="40" y="15" width="140" height="150" rx="12" fill="url(#paperGrad)" stroke="#e5e7eb" stroke-width="1.5"/>
-    <rect x="40" y="15" width="140" height="32" rx="12" fill="url(#accent)"/>
-    <rect x="40" y="35" width="140" height="12" fill="url(#accent)"/>
-    <rect x="54" y="26" width="50" height="6" rx="3" fill="rgba(255,255,255,0.85)"/>
-    <rect x="54" y="36" width="32" height="4" rx="2" fill="rgba(255,255,255,0.6)"/>
-    <line class="doc-line l1" x1="56" y1="65" x2="140" y2="65" stroke="#c7d2fe" stroke-width="4" stroke-linecap="round"/>
-    <line class="doc-line l2" x1="56" y1="82" x2="160" y2="82" stroke="#c7d2fe" stroke-width="4" stroke-linecap="round"/>
-    <line class="doc-line l3" x1="56" y1="99" x2="125" y2="99" stroke="#c7d2fe" stroke-width="4" stroke-linecap="round"/>
-    <line class="doc-line l4" x1="56" y1="116" x2="155" y2="116" stroke="#c7d2fe" stroke-width="4" stroke-linecap="round"/>
-    <line class="doc-line l5" x1="56" y1="133" x2="130" y2="133" stroke="#c7d2fe" stroke-width="4" stroke-linecap="round"/>
-    <g class="doc-check" transform="translate(165, 145)">
-      <circle cx="0" cy="0" r="18" fill="#10b981"/>
-      <polyline points="-7,0 -2,5 7,-5" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    </g>
-  </svg>
-</div>
-""")
-
-
 def dancing_mascot() -> str:
     """踊るオフィスワーカーマスコット（手振り・脚振り・まばたき・ジャンプ・きらめき）"""
     return _flat("""
