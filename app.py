@@ -160,20 +160,41 @@ def _break_total_hours(break_records):
 
 
 def get_work_records(year, month, access_token, company_id, employee_id):
-    """月次の勤怠サマリを取得 (work_record_summaries エンドポイント)"""
-    url = (
-        "https://api.freee.co.jp/hr/api/v1"
-        f"/employees/{employee_id}/work_record_summaries/{year}/{month}"
-    )
+    """各日ごとに勤怠データを取得 (GET /employees/{id}/work_records/{date})"""
     headers = {"Authorization": f"Bearer {access_token}"}
     params = {"company_id": company_id}
-    res = requests.get(url, headers=headers, params=params)
-    if res.status_code != 200:
-        st.error(f"勤怠APIエラー (status={res.status_code}): {res.text[:400]}")
-        return []
-    body = res.json()
-    summary = body.get("work_record_summary", body)
-    return summary.get("work_records", [])
+    days = calendar.monthrange(year, month)[1]
+
+    records = []
+    errors = []
+    progress = st.progress(0.0, text="勤怠データ取得中...")
+    for i in range(days):
+        day = i + 1
+        date_str = f"{year}-{month:02d}-{day:02d}"
+        url = (
+            "https://api.freee.co.jp/hr/api/v1"
+            f"/employees/{employee_id}/work_records/{date_str}"
+        )
+        res = requests.get(url, headers=headers, params=params)
+        if res.status_code == 200:
+            rec = res.json()
+            if not rec.get("date"):
+                rec["date"] = date_str
+            records.append(rec)
+        elif res.status_code != 404:
+            errors.append(f"{date_str}: status={res.status_code} {res.text[:120]}")
+        progress.progress((i + 1) / days, text=f"{date_str} 取得中...")
+    progress.empty()
+
+    if errors:
+        st.warning("一部の日付でエラーが発生しました:\n" + "\n".join(errors[:5]))
+
+    # デバッグ用: 先頭レコードの構造を確認できるようにする
+    if records:
+        with st.expander("🔍 先頭日のレスポンス構造 (デバッグ)"):
+            st.json(records[0])
+
+    return records
 
 
 def format_work_data(records):
