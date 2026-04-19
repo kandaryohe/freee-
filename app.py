@@ -34,7 +34,7 @@ CLIENT_ID = _cfg("CLIENT_ID")
 CLIENT_SECRET = _cfg("CLIENT_SECRET")
 REDIRECT_URI = _cfg("REDIRECT_URI")
 
-TEMPLATE_FILE = "2026_2月_作業実施報告書_SMHC_神田涼平 .xlsx"
+TEMPLATE_FILE = "YYYY年_MM月_作業実施報告書_SMHC_苗字 名前.xlsx"
 
 
 # =========================
