@@ -9,6 +9,7 @@ import requests
 import calendar
 from io import BytesIO
 from datetime import datetime, timedelta
+from urllib.parse import urlencode
 from dotenv import load_dotenv
 import streamlit as st
 from openpyxl import load_workbook
@@ -41,12 +42,13 @@ TEMPLATE_FILE = "2026_2月_作業実施報告書_SMHC_神田涼平 .xlsx"
 # =========================
 
 def get_auth_url():
-    return (
-        "https://accounts.secure.freee.co.jp/public_api/authorize"
-        f"?client_id={CLIENT_ID}"
-        "&response_type=code"
-        f"&redirect_uri={REDIRECT_URI}"
-    )
+    params = urlencode({
+        "client_id": CLIENT_ID,
+        "response_type": "code",
+        "redirect_uri": REDIRECT_URI,
+        "scope": "hr",
+    })
+    return f"https://accounts.secure.freee.co.jp/public_api/authorize?{params}"
 
 
 def save_token(token_data):
