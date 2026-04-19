@@ -279,6 +279,20 @@ st.markdown(ui.hero(), unsafe_allow_html=True)
 # トークン
 access_token = get_valid_token()
 
+# OAuth リダイレクトで戻ってきた場合、URLクエリ ?code=... を自動で拾って認証する
+if not access_token:
+    qp_code = st.query_params.get("code")
+    if qp_code:
+        try:
+            with st.spinner("認証中..."):
+                get_token_from_code(qp_code)
+            st.query_params.clear()  # URLから認可コードを消す
+            st.success("認証完了")
+            st.rerun()
+        except Exception as e:
+            st.error(f"認証エラー: {e}")
+            st.query_params.clear()
+
 # サイドバー
 with st.sidebar:
     st.markdown("### Status")
@@ -313,15 +327,16 @@ if not access_token:
 
             auth_url = get_auth_url()
 
-            st.markdown("**Step 1.** freee認証ページを開いて認可コードを取得")
+            st.markdown("**「freee認証ページを開く」** をクリック → freeeで許可すると自動で認証されます。")
             st.link_button("freee認証ページを開く", auth_url, use_container_width=True)
 
-            st.markdown("**Step 2.** 表示された認可コードを貼り付け")
-            code = st.text_input(
-                "認可コード",
-                placeholder="ここに認可コードを入力",
-                label_visibility="collapsed",
-            )
+            with st.expander("自動で認証されない場合（手動入力）"):
+                st.caption("リダイレクト先URL `?code=xxxxx` の xxxxx 部分を貼り付けてください。")
+                code = st.text_input(
+                    "認可コード",
+                    placeholder="ここに認可コードを入力",
+                    label_visibility="collapsed",
+                )
 
             if st.button("認証する", type="primary", use_container_width=True):
                 if not code:
