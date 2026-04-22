@@ -91,7 +91,7 @@ def ambient_blobs() -> str:
 
 
 def hero() -> str:
-    """ヒーロー: キャラクター（手振り・まばたき・バウンス）＋浮遊時計"""
+    """ヒーロー: タイトル＋説明テキスト"""
     return _flat("""
 <div class="hero">
   <div class="particles">
@@ -102,95 +102,6 @@ def hero() -> str:
     <div class="hero-text">
       <h1>freee 勤怠レポート</h1>
       <p>freee人事労務APIと連携し、当月の勤怠データを自動取得してExcelレポートをワンクリックで生成します。</p>
-    </div>
-
-    <div class="char-scene">
-      <svg class="char-svg" width="170" height="150" viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-        <defs>
-          <linearGradient id="blazerGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#475569"/>
-            <stop offset="100%" stop-color="#1e293b"/>
-          </linearGradient>
-          <linearGradient id="pantsGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#334155"/>
-            <stop offset="100%" stop-color="#0f172a"/>
-          </linearGradient>
-          <linearGradient id="hairGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#312e81"/>
-            <stop offset="100%" stop-color="#1e1b4b"/>
-          </linearGradient>
-          <linearGradient id="skinGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#fde4c9"/>
-            <stop offset="100%" stop-color="#fbcfa5"/>
-          </linearGradient>
-          <linearGradient id="accentGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#a78bfa"/>
-            <stop offset="100%" stop-color="#ec4899"/>
-          </linearGradient>
-        </defs>
-
-        <ellipse cx="100" cy="168" rx="46" ry="5" fill="rgba(0,0,0,0.22)"/>
-
-        <g class="char-body">
-          <rect x="88" y="128" width="10" height="32" rx="3" fill="url(#pantsGrad)"/>
-          <rect x="102" y="128" width="10" height="32" rx="3" fill="url(#pantsGrad)"/>
-          <ellipse cx="93" cy="161" rx="8.5" ry="3.5" fill="#0f172a"/>
-          <ellipse cx="107" cy="161" rx="8.5" ry="3.5" fill="#0f172a"/>
-          <rect x="85" y="158" width="16" height="3" rx="1.5" fill="#1e293b"/>
-          <rect x="99" y="158" width="16" height="3" rx="1.5" fill="#1e293b"/>
-
-          <path d="M72 86 Q72 82 76 82 L124 82 Q128 82 128 86 L128 130 Q128 134 124 134 L76 134 Q72 134 72 130 Z" fill="url(#blazerGrad)"/>
-          <path d="M86 82 L100 96 L114 82 L110 82 L100 92 L90 82 Z" fill="#0f172a" opacity="0.55"/>
-          <path d="M94 82 L100 93 L106 82 Z" fill="#ffffff"/>
-          <path d="M98 93 L102 93 L103 108 L97 108 Z" fill="url(#accentGrad)"/>
-          <rect x="116" y="100" width="7" height="5" rx="0.5" fill="#f9a8d4" opacity="0.9"/>
-
-          <rect x="62" y="86" width="11" height="40" rx="4" fill="url(#blazerGrad)"/>
-          <rect x="61" y="122" width="13" height="4" rx="1" fill="#0f172a" opacity="0.6"/>
-          <circle cx="68" cy="130" r="6.5" fill="url(#skinGrad)"/>
-
-          <g class="wave-arm">
-            <rect x="125" y="70" width="11" height="40" rx="4" fill="url(#blazerGrad)"/>
-            <rect x="124" y="106" width="13" height="4" rx="1" fill="#0f172a" opacity="0.6"/>
-            <circle cx="131" cy="68" r="7" fill="url(#skinGrad)"/>
-          </g>
-
-          <rect x="95" y="66" width="10" height="18" rx="2" fill="url(#skinGrad)"/>
-
-          <circle cx="100" cy="50" r="22" fill="url(#skinGrad)"/>
-
-          <path d="M78 48 Q80 22 100 20 Q122 22 122 48 Q118 38 108 34 Q104 32 100 32 Q96 32 92 34 Q85 36 78 48 Z" fill="url(#hairGrad)"/>
-          <path d="M82 30 Q92 24 102 26" stroke="#a78bfa" stroke-width="1.2" fill="none" opacity="0.7" stroke-linecap="round"/>
-
-          <circle cx="86" cy="58" r="2.5" fill="#fb7185" opacity="0.45"/>
-          <circle cx="114" cy="58" r="2.5" fill="#fb7185" opacity="0.45"/>
-
-          <circle cx="92" cy="52" r="6.5" fill="rgba(255,255,255,0.12)" stroke="#1f2937" stroke-width="1.3"/>
-          <circle cx="108" cy="52" r="6.5" fill="rgba(255,255,255,0.12)" stroke="#1f2937" stroke-width="1.3"/>
-          <line x1="98.5" y1="52" x2="101.5" y2="52" stroke="#1f2937" stroke-width="1.3"/>
-          <line x1="78" y1="51" x2="85.5" y2="52" stroke="#1f2937" stroke-width="1.3" stroke-linecap="round"/>
-          <line x1="114.5" y1="52" x2="122" y2="51" stroke="#1f2937" stroke-width="1.3" stroke-linecap="round"/>
-
-          <g class="char-eyes">
-            <ellipse cx="92" cy="52" rx="2" ry="2.8" fill="#1f2937"/>
-            <ellipse cx="108" cy="52" rx="2" ry="2.8" fill="#1f2937"/>
-            <circle cx="92.6" cy="51" r="0.7" fill="white"/>
-            <circle cx="108.6" cy="51" r="0.7" fill="white"/>
-          </g>
-
-          <path d="M95 63 Q100 67 105 63" stroke="#1f2937" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-
-          <circle cx="78" cy="55" r="1.6" fill="#fbbf24"/>
-        </g>
-
-        <g class="mini-clock" transform="translate(30, 40)">
-          <circle r="16" fill="white" opacity="0.95"/>
-          <circle r="16" fill="none" stroke="#fbbf24" stroke-width="1.5"/>
-          <line class="mini-hand-h" x1="0" y1="0" x2="0" y2="-9" stroke="#6366f1" stroke-width="2" stroke-linecap="round"/>
-          <line class="mini-hand-m" x1="0" y1="0" x2="7" y2="-3" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round"/>
-          <circle r="2" fill="#6366f1"/>
-        </g>
-      </svg>
     </div>
   </div>
 </div>

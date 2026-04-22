@@ -369,6 +369,7 @@ with st.sidebar:
 
     st.markdown("### Period")
     st.markdown(ui.icon_row_period(year, month), unsafe_allow_html=True)
+    st.markdown("<div style='height:0.6rem;'></div>", unsafe_allow_html=True)
     st.caption(f"自動判定: {now.strftime('%Y-%m-%d')}")
 
     st.markdown("### Security")
@@ -448,10 +449,7 @@ else:
         company_id = selected["id"]
         employee_id = selected.get("employee_id")
 
-        project_name = st.text_input(
-            "契約名 (任意)",
-            placeholder="例: ○○案件 (空欄可 / Excel の K3 に書き込まれます)",
-        )
+        project_name = st.text_input("契約名 (任意)")
 
         if not employee_id:
             st.error("この会社には従業員IDが紐付いていません")
