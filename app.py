@@ -335,13 +335,8 @@ st.set_page_config(
 
 # 現在時刻（時計アニメ初期位置に使用）
 now = datetime.now()
-# 対象年月: 既定は当月。サイドバーで上書き可能（デフォルトは session_state で保持）
-if "target_year" not in st.session_state:
-    st.session_state["target_year"] = now.year
-if "target_month" not in st.session_state:
-    st.session_state["target_month"] = now.month
-year = st.session_state["target_year"]
-month = st.session_state["target_month"]
+year = now.year
+month = now.month
 
 # スタイル読込（styles.css + 時計ディレイの CSS 変数）
 st.markdown(ui.load_styles(now), unsafe_allow_html=True)
@@ -375,24 +370,6 @@ with st.sidebar:
     st.markdown("### Period")
     st.markdown(ui.icon_row_period(year, month), unsafe_allow_html=True)
     st.caption(f"自動判定: {now.strftime('%Y-%m-%d')}")
-
-    with st.expander("対象年月を変更"):
-        col_y, col_m = st.columns(2)
-        new_year = col_y.number_input(
-            "年", min_value=2000, max_value=2100, value=year, step=1, key="ui_year"
-        )
-        new_month = col_m.number_input(
-            "月", min_value=1, max_value=12, value=month, step=1, key="ui_month"
-        )
-        if st.button("適用", use_container_width=True):
-            st.session_state["target_year"] = int(new_year)
-            st.session_state["target_month"] = int(new_month)
-            st.rerun()
-        if (year, month) != (now.year, now.month):
-            if st.button("当月に戻す", use_container_width=True):
-                st.session_state["target_year"] = now.year
-                st.session_state["target_month"] = now.month
-                st.rerun()
 
     st.markdown("### Security")
     st.markdown(ui.icon_row_security(), unsafe_allow_html=True)
@@ -465,7 +442,6 @@ else:
 
     with st.container(border=True):
         st.markdown(ui.report_card_header(), unsafe_allow_html=True)
-        st.markdown(ui.dancing_mascot(), unsafe_allow_html=True)
 
         label = st.selectbox("対象会社", list(options.keys()))
         selected = options[label]
