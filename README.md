@@ -39,7 +39,7 @@ freee人事労務APIと連携し、**当月の勤怠データを自動取得し�
 
 | 形態 | 用途 | 設定ソース | 利用URL |
 | --- | --- | --- | --- |
-| **ローカル実行** | 開発・個人動作確認 | `.env.sample` | `http://localhost:8501` |
+| **ローカル実行** | 開発・個人動作確認 | `.env` | `http://localhost:8501` |
 | **Streamlit Cloud** | チーム全員で共有利用 | Streamlit Secrets | `https://<your-app>.streamlit.app` |
 
 ---
@@ -61,8 +61,8 @@ pip install -r requirements.txt
 
 ### 3. 環境変数を設定
 
-プロジェクト直下に **`.env.sample`** ファイルを作成し、以下の値を設定します。
-（`.env.sample` は `.gitignore` 対象のため Git にはコミットされません）
+プロジェクト直下に **`.env`** ファイルを作成し、以下の値を設定します。
+（`.env` は `.gitignore` 対象のため Git にはコミットされません）
 
 ```env
 CLIENT_ID=<freeeアプリのClient ID>
@@ -119,7 +119,7 @@ CLIENT_SECRET = "<freeeアプリのClient Secret>"
 REDIRECT_URI = ""   # 次のステップでURL発行後に埋めるため一旦空欄でOK
 ```
 
-> 💡 本番運用時は `.env.sample` は使用されず、上記の Streamlit Secrets が優先されます。
+> 💡 本番運用時は `.env` は使用されず、上記の Streamlit Secrets が優先されます。
 
 #### 4. Deploy 実行
 
@@ -171,7 +171,7 @@ REDIRECT_URI = ""   # 次のステップでURL発行後に埋めるため一旦�
 ### ✅ 事前準備
 
 - [ ] freee 人事労務で自分のアカウントに当月の勤怠データがあることを確認
-- [ ] `.env.sample`（または Streamlit Cloud の Secrets）の `CLIENT_ID` / `CLIENT_SECRET` / `REDIRECT_URI` が正しく設定されているか
+- [ ] `.env`（または Streamlit Cloud の Secrets）の `CLIENT_ID` / `CLIENT_SECRET` / `REDIRECT_URI` が正しく設定されているか
 - [ ] freee アプリ管理画面のコールバックURLが `REDIRECT_URI` と完全一致しているか
 
 ### ✅ T1. 起動確認
@@ -257,7 +257,7 @@ REDIRECT_URI = ""   # 次のステップでURL発行後に埋めるため一旦�
 
 ## セキュリティ上の注意
 
-- `.env` / `.env.sample` はどちらも `.gitignore` で除外済。**絶対にコミットしないこと**
+- `.env` は `.gitignore` で除外済。**絶対にコミットしないこと**
 - `CLIENT_SECRET` が漏洩した場合は freee アプリ管理画面で即時再発行
 - アクセストークンは `st.session_state`（ブラウザセッションごと）に保管。ファイルには保存しません
 - Streamlit Cloud の Secrets はアプリ管理者のみ閲覧可能。チームメンバーには見えません

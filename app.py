@@ -16,9 +16,8 @@ from openpyxl import load_workbook
 
 import ui
 
-# 設定読込: ローカルは .env / .env.sample、Streamlit Cloud は st.secrets を使用
+# 設定読込: ローカルは .env、Streamlit Cloud は st.secrets を使用
 load_dotenv()
-load_dotenv(".env.sample", override=True)
 
 
 def _cfg(key: str) -> str | None:
@@ -198,12 +197,56 @@ def get_work_records(year, month, access_token, company_id, employee_id):
     if errors:
         st.warning("一部の日付でエラーが発生しました:\n" + "\n".join(errors[:5]))
 
-    # デバッグ用: 先頭レコードの構造を確認できるようにする
+    # デバッグ用: 有給/半休レコードを抽出して表示
     if records:
-        with st.expander("🔍 先頭日のレスポンス構造 (デバッグ)"):
-            st.json(records[0])
+        leave_records = [r for r in records if _is_leave_record(r)]
+        with st.expander(
+            f"🔍 有給/半休レコード ({len(leave_records)} 件)",
+            expanded=bool(leave_records),
+        ):
+            if leave_records:
+                for r in leave_records:
+                    st.write(f"**{r.get('date')}** - 判定: {detect_leave_type(r) or '(該当なし)'}")
+                    st.json(r)
+            else:
+                st.caption("有給/半休に該当するレコードなし")
 
     return records
+
+
+def _is_leave_record(r):
+    return (
+        (r.get("paid_holiday") or 0) != 0
+        or (r.get("half_paid_holiday_mins") or 0) != 0
+        or (r.get("half_special_holiday_mins") or 0) != 0
+        or (r.get("hourly_paid_holiday_mins") or 0) != 0
+        or (r.get("special_holiday") or 0) != 0
+        or bool(r.get("half_holiday_type"))
+        or bool(r.get("is_absence"))
+    )
+
+
+def detect_leave_type(r):
+    """freee レコードから有給/午前休/午後休を判定
+    Returns: "paid_full" | "am_half" | "pm_half" | None
+    """
+    paid = float(r.get("paid_holiday") or 0)
+    half_type = (r.get("half_holiday_type") or "").lower()
+    half_paid_mins = r.get("half_paid_holiday_mins") or 0
+
+    # 全日有給
+    if paid >= 1.0:
+        return "paid_full"
+
+    # 半休判定 (paid_holiday=0.5 または half_paid_holiday_mins>0)
+    is_half = paid >= 0.5 or half_paid_mins > 0 or bool(half_type)
+    if is_half:
+        if "am" in half_type:
+            return "am_half"
+        if "pm" in half_type:
+            return "pm_half"
+
+    return None
 
 
 def format_work_data(records):
@@ -216,16 +259,26 @@ def format_work_data(records):
             "clock_in": _parse_hhmm(r.get("clock_in_at")),
             "clock_out": _parse_hhmm(r.get("clock_out_at")),
             "break": _break_total_hours(r.get("break_records")),
+            "leave_type": detect_leave_type(r),
         }
     return data
 
 
-def write_to_excel(year, month, data, employee_name, last_name=None, first_name=None):
+LEAVE_REMARK = {
+    "paid_full": "有給取得",
+    "am_half": "午前休取得",
+    "pm_half": "午後休取得",
+}
+
+
+def write_to_excel(year, month, data, employee_name, last_name=None, first_name=None, project_name=None):
     wb = load_workbook(TEMPLATE_FILE)
     ws = wb.active
     ws["K5"] = last_name
     ws["L5"] = first_name
     ws["K8"] = date(year, month, 1)  # date型で書き込み → L列の weekday書式(ddd)が機能する
+    if project_name:
+        ws["K3"] = project_name
 
     days = calendar.monthrange(year, month)[1]
     for i in range(days):
@@ -235,14 +288,30 @@ def write_to_excel(year, month, data, employee_name, last_name=None, first_name=
         record = data.get(date_str, {})
         clock_in = record.get("clock_in")
         clock_out = record.get("clock_out")
-        ws[f"M{row}"] = clock_in
-        ws[f"N{row}"] = clock_out
-        # 土日かつ未出勤は休憩時間欄を空欄にする (0.0 を表示しない)
-        is_weekend = d.weekday() >= 5  # 5=土, 6=日
-        if is_weekend and not clock_in and not clock_out:
+        break_hours = record.get("break")
+        leave_type = record.get("leave_type")
+
+        if leave_type == "paid_full":
+            # 全日有給: 備考のみ記載、時刻・休憩は空欄
+            ws[f"H{row}"] = LEAVE_REMARK[leave_type]
+            ws[f"M{row}"] = None
+            ws[f"N{row}"] = None
             ws[f"O{row}"] = None
+        elif leave_type in ("am_half", "pm_half"):
+            # 半休: 備考 + 始業/終業時刻 + 休憩(無ければ0.0)
+            ws[f"H{row}"] = LEAVE_REMARK[leave_type]
+            ws[f"M{row}"] = clock_in
+            ws[f"N{row}"] = clock_out
+            ws[f"O{row}"] = break_hours if break_hours else 0.0
         else:
-            ws[f"O{row}"] = record.get("break")
+            # 通常日
+            ws[f"M{row}"] = clock_in
+            ws[f"N{row}"] = clock_out
+            # 出退勤とも無し → 休憩時間欄を空欄 (0.0 を表示しない)
+            if not clock_in and not clock_out:
+                ws[f"O{row}"] = None
+            else:
+                ws[f"O{row}"] = break_hours
 
     safe_name = (employee_name or "未設定").strip()
     file_name = f"{year}_{month}月_作業実施報告書_SMHC_{safe_name}.xlsx"
@@ -266,8 +335,13 @@ st.set_page_config(
 
 # 現在時刻（時計アニメ初期位置に使用）
 now = datetime.now()
-year = now.year
-month = now.month
+# 対象年月: 既定は当月。サイドバーで上書き可能（デフォルトは session_state で保持）
+if "target_year" not in st.session_state:
+    st.session_state["target_year"] = now.year
+if "target_month" not in st.session_state:
+    st.session_state["target_month"] = now.month
+year = st.session_state["target_year"]
+month = st.session_state["target_month"]
 
 # スタイル読込（styles.css + 時計ディレイの CSS 変数）
 st.markdown(ui.load_styles(now), unsafe_allow_html=True)
@@ -301,6 +375,24 @@ with st.sidebar:
     st.markdown("### Period")
     st.markdown(ui.icon_row_period(year, month), unsafe_allow_html=True)
     st.caption(f"自動判定: {now.strftime('%Y-%m-%d')}")
+
+    with st.expander("対象年月を変更"):
+        col_y, col_m = st.columns(2)
+        new_year = col_y.number_input(
+            "年", min_value=2000, max_value=2100, value=year, step=1, key="ui_year"
+        )
+        new_month = col_m.number_input(
+            "月", min_value=1, max_value=12, value=month, step=1, key="ui_month"
+        )
+        if st.button("適用", use_container_width=True):
+            st.session_state["target_year"] = int(new_year)
+            st.session_state["target_month"] = int(new_month)
+            st.rerun()
+        if (year, month) != (now.year, now.month):
+            if st.button("当月に戻す", use_container_width=True):
+                st.session_state["target_year"] = now.year
+                st.session_state["target_month"] = now.month
+                st.rerun()
 
     st.markdown("### Security")
     st.markdown(ui.icon_row_security(), unsafe_allow_html=True)
@@ -380,6 +472,11 @@ else:
         company_id = selected["id"]
         employee_id = selected.get("employee_id")
 
+        project_name = st.text_input(
+            "契約名 (任意)",
+            placeholder="例: ○○案件 (空欄可 / Excel の K3 に書き込まれます)",
+        )
+
         if not employee_id:
             st.error("この会社には従業員IDが紐付いていません")
         else:
@@ -404,6 +501,7 @@ else:
                     file_name, file_buffer = write_to_excel(
                         year, month, data, employee_name,
                         last_name=last_name, first_name=first_name,
+                        project_name=project_name,
                     )
                     st.write(f"　→ {file_name}")
 
