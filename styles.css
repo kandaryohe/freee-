@@ -373,4 +373,20 @@ div[data-testid="stMarkdownContainer"] > p { margin-bottom: 0.3rem; }
 
 /* 初回認証・レポートカード内は要素間を広めに */
 [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stVerticalBlock"] { gap: 1.25rem !important; }
+
+/* 認証手順説明: コンテナ幅に応じて自動で1行に収める */
+.auth-instr-line {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    font-size: clamp(0.55rem, 1.2cqw, 0.78rem) !important;
+    line-height: 1.6 !important;
+    margin: 0.4rem 0 !important;
+    letter-spacing: -0.01em !important;
+    container-type: inline-size;
+}
+/* コンテナクエリ非対応ブラウザ向けフォールバック */
+@supports not (container-type: inline-size) {
+    .auth-instr-line { font-size: 0.7rem !important; }
+}
+.auth-instr-line strong { font-size: inherit !important; white-space: nowrap !important; }
 [data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stMarkdownContainer"] > p { margin-bottom: 0.5rem; }

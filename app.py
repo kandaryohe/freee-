@@ -8,9 +8,12 @@ import os
 import requests
 import calendar
 from io import BytesIO
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, date, time, timedelta
 from urllib.parse import urlencode
 from dotenv import load_dotenv
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 import streamlit as st
 from openpyxl import load_workbook
 
@@ -34,6 +37,34 @@ CLIENT_SECRET = _cfg("CLIENT_SECRET")
 REDIRECT_URI = _cfg("REDIRECT_URI")
 
 TEMPLATE_FILE = "YYYY年_MM月_作業実施報告書_SMHC_苗字 名前.xlsx"
+
+
+# =========================
+# 共有リソース（プロセス内で1回だけ生成）
+# =========================
+
+@st.cache_resource
+def _http_session() -> requests.Session:
+    """freee API 向け共有セッション。429/5xx で自動リトライ。"""
+    s = requests.Session()
+    retry = Retry(
+        total=3,
+        backoff_factor=1.0,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["GET", "POST"],
+        respect_retry_after_header=True,
+    )
+    adapter = HTTPAdapter(max_retries=retry, pool_connections=20, pool_maxsize=20)
+    s.mount("https://", adapter)
+    return s
+
+
+@st.cache_resource
+def _template_bytes() -> bytes:
+    """テンプレートExcelを起動時に1度だけメモリへ読み込む。
+    以降はディスクI/Oを行わないので、ローカルでテンプレートを開いていても影響なし。"""
+    with open(TEMPLATE_FILE, "rb") as f:
+        return f.read()
 
 
 # =========================
@@ -67,7 +98,7 @@ def get_token_from_code(code):
         "code": code,
         "redirect_uri": REDIRECT_URI,
     }
-    res = requests.post(url, data=data)
+    res = _http_session().post(url, data=data)
     token = res.json()
     token["expires_at"] = (datetime.now() + timedelta(seconds=token["expires_in"])).timestamp()
     save_token(token)
@@ -82,7 +113,7 @@ def refresh_token(token):
         "client_secret": CLIENT_SECRET,
         "refresh_token": token["refresh_token"],
     }
-    res = requests.post(url, data=data)
+    res = _http_session().post(url, data=data)
     new_token = res.json()
     new_token["expires_at"] = (datetime.now() + timedelta(seconds=new_token["expires_in"])).timestamp()
     save_token(new_token)
@@ -105,7 +136,7 @@ def get_valid_token():
 def get_user_info(access_token):
     url = "https://api.freee.co.jp/hr/api/v1/users/me"
     headers = {"Authorization": f"Bearer {access_token}"}
-    res = requests.get(url, headers=headers)
+    res = _http_session().get(url, headers=headers)
     if res.status_code != 200:
         st.error(f"ユーザー情報取得エラー: {res.text}")
         return None
@@ -168,31 +199,42 @@ def _break_total_hours(break_records):
 
 
 def get_work_records(year, month, access_token, company_id, employee_id):
-    """各日ごとに勤怠データを取得 (GET /employees/{id}/work_records/{date})"""
+    """各日ごとに勤怠データを取得 (GET /employees/{id}/work_records/{date})
+
+    並列リクエストで高速化。同時利用者数 × max_workers ≦ freee 側のレート制限を
+    超えないよう、max_workers は 4 に抑制（リトライ機構と併用）。"""
     headers = {"Authorization": f"Bearer {access_token}"}
     params = {"company_id": company_id}
     days = calendar.monthrange(year, month)[1]
+    dates = [f"{year}-{month:02d}-{d + 1:02d}" for d in range(days)]
+    session = _http_session()
 
-    records = []
-    errors = []
-    progress = st.progress(0.0, text="勤怠データ取得中...")
-    for i in range(days):
-        day = i + 1
-        date_str = f"{year}-{month:02d}-{day:02d}"
+    def _fetch(date_str):
         url = (
             "https://api.freee.co.jp/hr/api/v1"
             f"/employees/{employee_id}/work_records/{date_str}"
         )
-        res = requests.get(url, headers=headers, params=params)
-        if res.status_code == 200:
-            rec = res.json()
-            if not rec.get("date"):
-                rec["date"] = date_str
-            records.append(rec)
-        elif res.status_code != 404:
-            errors.append(f"{date_str}: status={res.status_code} {res.text[:120]}")
-        progress.progress((i + 1) / days, text=f"{date_str} 取得中...")
+        return date_str, session.get(url, headers=headers, params=params)
+
+    records = []
+    errors = []
+    progress = st.progress(0.0, text="勤怠データ取得中...")
+    with ThreadPoolExecutor(max_workers=4) as ex:
+        futures = [ex.submit(_fetch, d) for d in dates]
+        for i, fut in enumerate(as_completed(futures)):
+            date_str, res = fut.result()
+            if res.status_code == 200:
+                rec = res.json()
+                if not rec.get("date"):
+                    rec["date"] = date_str
+                records.append(rec)
+            elif res.status_code != 404:
+                errors.append(f"{date_str}: status={res.status_code} {res.text[:120]}")
+            progress.progress((i + 1) / days, text=f"{i + 1}/{days} 件取得")
     progress.empty()
+
+    # 並列取得は順序が不定なので日付順に整列
+    records.sort(key=lambda r: r.get("date", ""))
 
     if errors:
         st.warning("一部の日付でエラーが発生しました:\n" + "\n".join(errors[:5]))
@@ -272,7 +314,7 @@ LEAVE_REMARK = {
 
 
 def write_to_excel(year, month, data, employee_name, last_name=None, first_name=None, project_name=None):
-    wb = load_workbook(TEMPLATE_FILE)
+    wb = load_workbook(BytesIO(_template_bytes()))
     ws = wb.active
     ws["K5"] = last_name
     ws["L5"] = first_name
@@ -397,7 +439,26 @@ if not access_token:
 
             auth_url = get_auth_url()
 
-            st.markdown("**「freee認証ページを開く」** をクリック → freeeで許可すると自動で認証されます。")
+            st.markdown(
+                """
+<style>
+.auth-instr-line {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: clip !important;
+    font-size: 0.68rem !important;
+    line-height: 1.6 !important;
+    margin: 0.4rem 0 !important;
+    letter-spacing: -0.01em !important;
+    display: block !important;
+    width: 100% !important;
+}
+.auth-instr-line strong { font-size: inherit !important; white-space: nowrap !important; }
+</style>
+<p class="auth-instr-line"><strong>「freee認証ページを開く」</strong>をクリック → freeeで許可すると自動で認証されます。</p>
+""",
+                unsafe_allow_html=True,
+            )
             st.link_button("freee認証ページを開く", auth_url, use_container_width=True)
 
             with st.expander("自動で認証されない場合（手動入力）"):
