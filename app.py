@@ -386,7 +386,8 @@ def upload_work_records(year, month, records, access_token, company_id, employee
         clock_out = rec.get("clock_out_at")
         remarks = rec.get("remarks", "")
 
-        # 全日有給・出退勤なし（休日）はスキップ
+        # 全日有給・出退勤データなし（未入力の休日など）はスキップ
+        # 休日出勤で始業/終業が入力されている場合はスキップしない
         if remarks == "有給取得" or (not clock_in and not clock_out):
             results["skipped"].append(date_str)
             progress.progress((i + 1) / days)
@@ -675,7 +676,8 @@ else:
             elif uploaded_file:
                 st.markdown(ui.info_row_ids(company_id_ul, employee_id_ul), unsafe_allow_html=True)
                 st.caption(
-                    "※ 全日有給・出退勤なし（休日）の行はスキップされます。  \n"
+                    "※ 全日有給・出退勤データなし（未入力の休日など）の行はスキップされます。  \n"
+                    "※ 休日出勤は始業・終業が入力されていれば通常通り書き込まれます。  \n"
                     "※ 休憩時間は 12:00 開始の1ブロックとしてfreeeに登録されます。  \n"
                     "※ 既存データがある日は上書きされます。"
                 )
