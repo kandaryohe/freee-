@@ -181,6 +181,16 @@ def report_card_header() -> str:
 """)
 
 
+def upload_card_header() -> str:
+    return _flat(f"""
+<div class="card-title">
+    <span class="card-title-icon">{ICON_SPARK}</span>
+    <span>Excel → freee 書き込み</span>
+</div>
+<div class="card-sub">作業実施報告書のExcelをアップロードすると、勤怠データをfreeeに自動で書き込みます。</div>
+""")
+
+
 def info_row_ids(company_id, employee_id: str) -> str:
     return _flat(f"""
 <div class="icon-row">

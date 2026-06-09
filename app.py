@@ -313,6 +313,109 @@ LEAVE_REMARK = {
 }
 
 
+def read_excel_for_upload(file_bytes: bytes):
+    """アップロードされたExcelから勤怠データを読み取る。
+    Returns: (year, month, records_dict) or raises ValueError"""
+    wb = load_workbook(BytesIO(file_bytes))
+    ws = wb.active
+
+    k8 = ws["K8"].value
+    if isinstance(k8, (datetime, date)):
+        year, month = k8.year, k8.month
+    else:
+        raise ValueError("K8セルから対象月を読み取れませんでした。テンプレートのフォーマットを確認してください。")
+
+    days = calendar.monthrange(year, month)[1]
+    records = {}
+
+    for i in range(days):
+        row = 8 + i
+        d = date(year, month, i + 1)
+        date_str = d.strftime("%Y-%m-%d")
+
+        clock_in = ws[f"M{row}"].value
+        clock_out = ws[f"N{row}"].value
+        break_val = ws[f"O{row}"].value
+        remarks = (ws[f"H{row}"].value or "").strip()
+
+        def to_iso(val, date_str):
+            if isinstance(val, time):
+                return f"{date_str}T{val.strftime('%H:%M:%S')}.000+09:00"
+            if isinstance(val, datetime):
+                return f"{date_str}T{val.strftime('%H:%M:%S')}.000+09:00"
+            return None
+
+        # 休憩合計時間(float)から12:00スタートのbreak_recordsを生成
+        break_records = []
+        if break_val and float(break_val) > 0:
+            total_minutes = int(float(break_val) * 60)
+            start_minutes = 12 * 60
+            end_minutes = start_minutes + total_minutes
+            b_start = time(start_minutes // 60, start_minutes % 60)
+            b_end = time(end_minutes // 60, end_minutes % 60)
+            break_records = [{
+                "clock_in_at": f"{date_str}T{b_start.strftime('%H:%M:%S')}.000+09:00",
+                "clock_out_at": f"{date_str}T{b_end.strftime('%H:%M:%S')}.000+09:00",
+            }]
+
+        records[date_str] = {
+            "clock_in_at": to_iso(clock_in, date_str),
+            "clock_out_at": to_iso(clock_out, date_str),
+            "break_records": break_records,
+            "remarks": remarks,
+        }
+
+    return year, month, records
+
+
+def upload_work_records(year, month, records, access_token, company_id, employee_id):
+    """勤怠データをfreeeに書き込む。Returns: {"success": [...], "skipped": [...], "error": [...]}"""
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json",
+    }
+    session = _http_session()
+    results = {"success": [], "skipped": [], "error": []}
+    days = calendar.monthrange(year, month)[1]
+    dates = [f"{year}-{month:02d}-{d + 1:02d}" for d in range(days)]
+
+    progress = st.progress(0.0, text="freeeへ書き込み中...")
+    for i, date_str in enumerate(dates):
+        rec = records.get(date_str, {})
+        clock_in = rec.get("clock_in_at")
+        clock_out = rec.get("clock_out_at")
+        remarks = rec.get("remarks", "")
+
+        # 全日有給・出退勤なし（休日）はスキップ
+        if remarks == "有給取得" or (not clock_in and not clock_out):
+            results["skipped"].append(date_str)
+            progress.progress((i + 1) / days)
+            continue
+
+        url = (
+            "https://api.freee.co.jp/hr/api/v1"
+            f"/employees/{employee_id}/work_records/{date_str}"
+        )
+        body = {"company_id": company_id}
+        if clock_in:
+            body["clock_in_at"] = clock_in
+        if clock_out:
+            body["clock_out_at"] = clock_out
+        if rec.get("break_records"):
+            body["break_records"] = rec["break_records"]
+
+        res = session.put(url, headers=headers, json=body)
+        if res.status_code in (200, 201):
+            results["success"].append(date_str)
+        else:
+            results["error"].append(f"{date_str}: HTTP {res.status_code} / {res.text[:120]}")
+
+        progress.progress((i + 1) / days, text=f"{i + 1}/{days} 件処理")
+
+    progress.empty()
+    return results
+
+
 def write_to_excel(year, month, data, employee_name, last_name=None, first_name=None, project_name=None):
     wb = load_workbook(BytesIO(_template_bytes()))
     ws = wb.active
@@ -502,52 +605,114 @@ else:
     m2.metric("対象月", f"{year}年{month:02d}月")
     m3.metric("所属会社", f"{len(companies)} 社")
 
-    with st.container(border=True):
-        st.markdown(ui.report_card_header(), unsafe_allow_html=True)
+    tab_dl, tab_ul = st.tabs(["freee → Excel（ダウンロード）", "Excel → freee（アップロード）"])
 
-        label = st.selectbox("対象会社", list(options.keys()))
-        selected = options[label]
-        company_id = selected["id"]
-        employee_id = selected.get("employee_id")
+    with tab_dl:
+        with st.container(border=True):
+            st.markdown(ui.report_card_header(), unsafe_allow_html=True)
 
-        project_name = st.text_input("契約名 (任意)")
+            label = st.selectbox("対象会社", list(options.keys()), key="dl_company")
+            selected = options[label]
+            company_id = selected["id"]
+            employee_id = selected.get("employee_id")
 
-        if not employee_id:
-            st.error("この会社には従業員IDが紐付いていません")
-        else:
-            st.markdown(ui.info_row_ids(company_id, employee_id), unsafe_allow_html=True)
+            project_name = st.text_input("契約名 (任意)")
 
-            if st.button("データ取得 & Excel作成", type="primary", use_container_width=True):
-                with st.status("レポートを生成しています...", expanded=True) as status:
-                    st.write("① 従業員情報を取得中...")
-                    # /users/me の companies[].display_name から氏名を取得し分割
-                    employee_name = selected.get("display_name")
-                    last_name, first_name = split_display_name(employee_name)
-                    st.write(f"　→ {employee_name or '(取得失敗)'} (苗字: {last_name or '-'} / 名前: {first_name or '-'})")
+            if not employee_id:
+                st.error("この会社には従業員IDが紐付いていません")
+            else:
+                st.markdown(ui.info_row_ids(company_id, employee_id), unsafe_allow_html=True)
 
-                    st.write("② 勤怠データを取得中...")
-                    records = get_work_records(year, month, access_token, company_id, employee_id)
-                    st.write(f"　→ {len(records)} 件のレコードを取得")
+                if st.button("データ取得 & Excel作成", type="primary", use_container_width=True):
+                    with st.status("レポートを生成しています...", expanded=True) as status:
+                        st.write("① 従業員情報を取得中...")
+                        employee_name = selected.get("display_name")
+                        last_name, first_name = split_display_name(employee_name)
+                        st.write(f"　→ {employee_name or '(取得失敗)'} (苗字: {last_name or '-'} / 名前: {first_name or '-'})")
 
-                    st.write("③ データを整形中...")
-                    data = format_work_data(records)
+                        st.write("② 勤怠データを取得中...")
+                        records = get_work_records(year, month, access_token, company_id, employee_id)
+                        st.write(f"　→ {len(records)} 件のレコードを取得")
 
-                    st.write("④ Excelファイルを生成中...")
-                    file_name, file_buffer = write_to_excel(
-                        year, month, data, employee_name,
-                        last_name=last_name, first_name=first_name,
-                        project_name=project_name,
+                        st.write("③ データを整形中...")
+                        data = format_work_data(records)
+
+                        st.write("④ Excelファイルを生成中...")
+                        file_name, file_buffer = write_to_excel(
+                            year, month, data, employee_name,
+                            last_name=last_name, first_name=first_name,
+                            project_name=project_name,
+                        )
+                        st.write(f"　→ {file_name}")
+
+                        status.update(label="レポート生成完了", state="complete", expanded=False)
+
+                    st.download_button(
+                        label="Excelをダウンロード",
+                        data=file_buffer,
+                        file_name=file_name,
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        use_container_width=True,
                     )
-                    st.write(f"　→ {file_name}")
 
-                    status.update(label="レポート生成完了", state="complete", expanded=False)
+    with tab_ul:
+        with st.container(border=True):
+            st.markdown(ui.upload_card_header(), unsafe_allow_html=True)
 
-                st.download_button(
-                    label="Excelをダウンロード",
-                    data=file_buffer,
-                    file_name=file_name,
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True,
+            label_ul = st.selectbox("対象会社", list(options.keys()), key="ul_company")
+            selected_ul = options[label_ul]
+            company_id_ul = selected_ul["id"]
+            employee_id_ul = selected_ul.get("employee_id")
+
+            uploaded_file = st.file_uploader(
+                "作業実施報告書（Excel）をアップロード",
+                type=["xlsx"],
+                help="このアプリで生成した作業実施報告書テンプレートを使用してください。",
+            )
+
+            if not employee_id_ul:
+                st.error("この会社には従業員IDが紐付いていません")
+            elif uploaded_file:
+                st.markdown(ui.info_row_ids(company_id_ul, employee_id_ul), unsafe_allow_html=True)
+                st.caption(
+                    "※ 全日有給・出退勤なし（休日）の行はスキップされます。  \n"
+                    "※ 休憩時間は 12:00 開始の1ブロックとしてfreeeに登録されます。  \n"
+                    "※ 既存データがある日は上書きされます。"
                 )
+
+                if st.button("freeeへ書き込む", type="primary", use_container_width=True):
+                    try:
+                        ul_year, ul_month, ul_records = read_excel_for_upload(uploaded_file.read())
+                    except ValueError as e:
+                        st.error(str(e))
+                        st.stop()
+
+                    with st.status(
+                        f"{ul_year}年{ul_month:02d}月 の勤怠データを書き込んでいます...",
+                        expanded=True,
+                    ) as status:
+                        results = upload_work_records(
+                            ul_year, ul_month, ul_records,
+                            access_token, company_id_ul, employee_id_ul,
+                        )
+
+                        ok = len(results["success"])
+                        sk = len(results["skipped"])
+                        ng = len(results["error"])
+
+                        if ng == 0:
+                            status.update(label=f"書き込み完了: {ok} 件成功 / {sk} 件スキップ", state="complete", expanded=False)
+                        else:
+                            status.update(label=f"書き込み完了（一部エラー）: {ok} 件成功 / {sk} 件スキップ / {ng} 件エラー", state="error", expanded=True)
+
+                    col_ok, col_sk, col_ng = st.columns(3)
+                    col_ok.metric("成功", ok)
+                    col_sk.metric("スキップ", sk)
+                    col_ng.metric("エラー", ng)
+
+                    if results["error"]:
+                        with st.expander("エラー詳細"):
+                            for e in results["error"]:
+                                st.error(e)
 
 st.markdown(ui.footer_note("© <b>freee Kintai Report</b> · Streamlit で構築"), unsafe_allow_html=True)
